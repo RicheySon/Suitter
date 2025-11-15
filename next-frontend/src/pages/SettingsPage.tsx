@@ -3,6 +3,7 @@ import { MinimalHeader } from '../../components/minimal-header'
 import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 import { useSui } from '../../components/sui-context'
 import { useTheme } from '../../components/theme-provider'
 import { useState } from 'react'
@@ -80,7 +81,7 @@ function SettingsContent() {
           onCompose={() => setIsComposeOpen(true)}
         />
 
-        <main className="flex-1 overflow-hidden max-w-2xl w-full mx-auto border-r border-border">
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
           <div className="h-full flex flex-col overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-3 z-10">
@@ -190,34 +191,37 @@ function SettingsContent() {
                 </button>
               </section>
 
-              {/* Delete Account Confirmation Modal */}
-              {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4">
-                  <div className="card-base w-full max-w-sm p-6">
-                    <h3 className="text-lg font-bold text-foreground mb-2">Delete Account?</h3>
-                    <p className="text-muted-foreground mb-6">
-                      This action cannot be undone. All your posts, followers, and data will be permanently deleted.
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 btn-base py-2 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg font-semibold"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleDeleteAccount}
-                        className="flex-1 btn-base py-2 bg-destructive text-destructive-foreground hover:opacity-90 rounded-lg font-semibold"
-                      >
-                        Delete
-                      </button>
-                    </div>
+            </div>
+
+            {/* Delete Account Confirmation Modal */}
+            {showDeleteConfirm && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+                <div className="card-base w-full max-w-sm p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-2">Delete Account?</h3>
+                  <p className="text-muted-foreground mb-6">
+                    This action cannot be undone. All your posts, followers, and data will be permanently deleted.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 btn-base py-2 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteAccount}
+                      className="flex-1 btn-base py-2 bg-destructive text-destructive-foreground hover:opacity-90 rounded-lg font-semibold"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </main>
+
+        <TrendingSidebar />
       </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />

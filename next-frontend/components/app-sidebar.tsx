@@ -82,12 +82,18 @@ export function AppSidebar({ isOpen, onClose, onCompose }: AppSidebarProps) {
               onCompose()
               onClose()
             }}
-            className={`w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 rounded-lg font-semibold transition-colors ${
-              isCollapsed ? 'p-2' : ''
+            className={`w-full bg-foreground text-background hover:bg-foreground/90 py-3 rounded-full font-semibold transition-colors flex items-center justify-center gap-2 ${
+              isCollapsed ? 'px-0' : ''
             }`}
             title={isCollapsed ? 'Post' : undefined}
           >
-            {isCollapsed ? '✎' : 'Post'}
+            {isCollapsed ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            ) : (
+              'Post'
+            )}
           </button>
 
           <button

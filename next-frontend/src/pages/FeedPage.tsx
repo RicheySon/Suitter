@@ -4,6 +4,7 @@ import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { FeedVertical } from '../../components/feed-vertical'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 
 export default function FeedPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -25,6 +26,8 @@ export default function FeedPage() {
           <main className="flex-1 overflow-hidden bg-black">
             <FeedVertical />
           </main>
+
+          <TrendingSidebar />
         </div>
 
         <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />

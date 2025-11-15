@@ -103,7 +103,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
   return (
     <div className="h-full flex flex-col bg-background">
       <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-4 z-10">
-        <div className="flex gap-3">
+        <div className="flex gap-3 justify-center border rounded-2xl p-2 max-w-md mx-auto">
           <button
             onClick={() => setTab('foryou')}
             className={`px-6 py-2 rounded-full font-semibold transition-all ${

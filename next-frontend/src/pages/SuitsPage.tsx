@@ -3,6 +3,7 @@ import { MinimalHeader } from '../../components/minimal-header'
 import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 import { useSui } from '../../components/sui-context'
 import { useState } from 'react'
 import { SuitCard } from '../../components/suit-card'
@@ -76,7 +77,7 @@ function SuitsContent() {
           onCompose={() => setIsComposeOpen(true)}
         />
 
-        <main className="flex-1 overflow-hidden max-w-2xl w-full mx-auto border-r border-border">
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
           <div className="h-full flex flex-col overflow-y-auto">
             {/* Header */}
             <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-3 z-10 flex items-center gap-4">
@@ -104,6 +105,8 @@ function SuitsContent() {
             </div>
           </div>
         </main>
+
+        <TrendingSidebar />
       </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />

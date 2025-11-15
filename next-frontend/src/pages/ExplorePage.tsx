@@ -4,6 +4,7 @@ import { MinimalHeader } from '../../components/minimal-header'
 import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 
 interface Category {
   name: string
@@ -75,6 +76,8 @@ function ExploreContent() {
             </div>
           </div>
         </main>
+
+        <TrendingSidebar />
       </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />

@@ -1,7 +1,9 @@
 import { Heart, MessageCircle, Repeat2, User } from 'lucide-react'
-import { NavHeader } from '../../components/nav-header'
+import { MinimalHeader } from '../../components/minimal-header'
+import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 import { useState } from 'react'
 
 interface Notification {
@@ -68,6 +70,7 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 function NotificationsContent() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isComposeOpen, setIsComposeOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(SAMPLE_NOTIFICATIONS)
 
@@ -89,9 +92,17 @@ function NotificationsContent() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <NavHeader />
-      
-      <main className="flex-1 overflow-hidden max-w-2xl w-full mx-auto border-r border-border">
+      <MinimalHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          onCompose={() => setIsComposeOpen(true)}
+        />
+
+        {/* Main Feed */}
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
         <div className="h-full flex flex-col overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-3 z-10">
@@ -114,7 +125,7 @@ function NotificationsContent() {
                 >
                   <div className="flex gap-4">
                     {/* Avatar with Badge */}
-                    <div className="relative flex-shrink-0">
+                    <div className="relative shrink-0">
                       <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold">
                         {notif.handle.charAt(0).toUpperCase()}
                       </div>
@@ -135,14 +146,17 @@ function NotificationsContent() {
                       </p>
                     </div>
 
-                    {!notif.read && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1" />}
+                    {!notif.read && <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1" />}
                   </div>
                 </button>
               ))
             )}
           </div>
         </div>
-      </main>
+        </main>
+
+        <TrendingSidebar />
+      </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />
     </div>

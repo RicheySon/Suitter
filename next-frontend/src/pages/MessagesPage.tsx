@@ -1,6 +1,10 @@
 import { Search, Send, ArrowLeft, Plus } from "lucide-react";
-import { NavHeader } from "../../components/nav-header";
+import { MinimalHeader } from "../../components/minimal-header";
+import { AppSidebar } from "../../components/app-sidebar";
 import { NewChatModal } from "../../components/new-chat-modal";
+import { SuiProvider } from "../../components/sui-context";
+import { ComposeModal } from "../../components/compose-modal";
+import { TrendingSidebar } from "../../components/trending-sidebar";
 import { useState, useEffect } from "react";
 import { useMessaging } from "../../hooks/useMessaging";
 import { useCurrentAccount } from "@mysten/dapp-kit";
@@ -33,7 +37,7 @@ function formatTime(timestamp: number): string {
   });
 }
 
-function MessagesPage() {
+function MessagesContent() {
   const currentAccount = useCurrentAccount();
   const {
     channels,
@@ -45,6 +49,8 @@ function MessagesPage() {
     isSendingMessage,
   } = useMessaging();
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
@@ -91,7 +97,16 @@ function MessagesPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <main className="flex-1 overflow-hidden">
+      <MinimalHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          onCompose={() => setIsComposeOpen(true)}
+        />
+
+        <main className="flex-1 overflow-hidden border-r border-border max-w-2xl">
         <div className="h-full flex">
           {/* Chat List */}
           <div
@@ -278,8 +293,12 @@ function MessagesPage() {
             )}
           </div>
         </div>
-      </main>
+        </main>
 
+        <TrendingSidebar />
+      </div>
+
+      <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />
       <NewChatModal
         isOpen={isNewChatOpen}
         onClose={() => setIsNewChatOpen(false)}
@@ -290,4 +309,10 @@ function MessagesPage() {
   );
 }
 
-export default MessagesPage;
+export default function MessagesPage() {
+  return (
+    <SuiProvider>
+      <MessagesContent />
+    </SuiProvider>
+  );
+}
