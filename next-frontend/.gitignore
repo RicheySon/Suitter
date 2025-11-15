@@ -1,0 +1,15 @@
+node_modules
+.dist
+.next
+
+.env
+.env.local
+.env.development.local
+
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+./src/scripts
+.DS_Store
+*.md
