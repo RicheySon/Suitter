@@ -1,0 +1,146 @@
+@import 'tailwindcss';
+
+:root {
+  /* Monochrome Design System - Light Mode */
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+  --card: 250 250 250;
+  --card-foreground: 0 0 0;
+  --primary: 0 0 0;
+  --primary-foreground: 255 255 255;
+  --secondary: 120 120 120;
+  --secondary-foreground: 255 255 255;
+  --muted: 200 200 200;
+  --muted-foreground: 80 80 80;
+  --border: 229 229 229;
+  --input: 240 240 240;
+  --accent: 0 0 0;
+  --accent-foreground: 255 255 255;
+  --destructive: 220 38 38;
+  --destructive-foreground: 255 255 255;
+  --radius: 1rem;
+}
+
+.dark {
+  /* Monochrome Design System - Dark Mode */
+  --background: 10 10 10;
+  --foreground: 245 245 245;
+  --card: 20 20 20;
+  --card-foreground: 245 245 245;
+  --primary: 255 255 255;
+  --primary-foreground: 10 10 10;
+  --secondary: 140 140 140;
+  --secondary-foreground: 10 10 10;
+  --muted: 60 60 60;
+  --muted-foreground: 170 170 170;
+  --border: 40 40 40;
+  --input: 30 30 30;
+  --accent: 255 255 255;
+  --accent-foreground: 10 10 10;
+  --destructive: 239 68 68;
+  --destructive-foreground: 10 10 10;
+}
+
+@theme inline {
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+  --radius: var(--radius);
+}
+
+/* Plain CSS only - no @layer to avoid Tailwind validation errors */
+* {
+  border-color: rgb(var(--border));
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  transition-property: background-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: rgb(var(--foreground));
+}
+
+a {
+  color: rgb(var(--primary));
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Custom utility classes - plain CSS */
+.card-base {
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(var(--card));
+  color: rgb(var(--card-foreground));
+  border-radius: 1rem;
+  border: 1px solid rgb(var(--border));
+  padding: 1rem;
+  transition-property: background-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.btn-base:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgb(var(--primary));
+}
+
+.btn-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted));
+}
