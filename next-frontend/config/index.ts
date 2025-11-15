@@ -1,5 +1,7 @@
 const CONFIG = {
-  VITE_PACKAGE_ID: import.meta.env.VITE_PACKAGE_ID || "0x...",
+  VITE_PACKAGE_ID:
+    import.meta.env.VITE_PACKAGE_ID ||
+    "0x95593861a7d92b0a9470e02aab1e4a1cda6646e5fd84ef66c37045fe54e446f7",
   VITE_API_URL: import.meta.env.VITE_API_URL || "https://api.example.com",
   VITE_WALRUS_URL:
     import.meta.env.VITE_WALRUS_URL || "https://walrus.example.com",

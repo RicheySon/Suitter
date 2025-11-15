@@ -17,19 +17,6 @@ interface Message {
   isSender: boolean;
 }
 
-interface Channel {
-  id: string;
-  name: string;
-  members: number;
-  messagesCount: number;
-  lastMessage: {
-    text: string;
-    sender: string;
-    timestamp: number;
-  } | null;
-  creator: string;
-}
-
 function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -40,13 +27,17 @@ function formatTime(timestamp: number): string {
 function MessagesContent() {
   const currentAccount = useCurrentAccount();
   const {
-    channels,
+    chats,
+    messages: chatMessages,
     isLoadingChats,
-    createChannel,
-    sendMessage: sendMsg,
-    useMessages,
-    isCreatingChannel,
+    isLoadingMessages,
     isSendingMessage,
+    isCreatingChat,
+    error: chatError,
+    startChat,
+    sendMessage: sendMsg,
+    fetchMessages,
+    fetchChats,
   } = useMessaging();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -56,12 +47,16 @@ function MessagesContent() {
   const [inputValue, setInputValue] = useState("");
   const [showMobileList, setShowMobileList] = useState(true);
 
-  // Get messages for selected chat
-  const { data: chatMessages = [] } = useMessages(selectedChat);
+  // Load messages when chat is selected
+  useEffect(() => {
+    if (selectedChat) {
+      fetchMessages(selectedChat);
+    }
+  }, [selectedChat, fetchMessages]);
 
-  // Convert SDK messages to UI format
-  const messages: Message[] = chatMessages.map((msg: any, index: number) => ({
-    id: index.toString(),
+  // Convert messages to UI format
+  const messages: Message[] = chatMessages.map((msg: any) => ({
+    id: msg.id,
     sender: msg.sender,
     text: msg.text || "",
     timestamp: msg.timestamp || Date.now(),
@@ -70,10 +65,14 @@ function MessagesContent() {
 
   const handleStartChat = async (receiverAddress: string) => {
     try {
-      await createChannel(receiverAddress);
+      const result = await startChat(receiverAddress);
+      if (result?.chatId) {
+        setSelectedChat(result.chatId);
+        setShowMobileList(false);
+      }
       setIsNewChatOpen(false);
     } catch (error) {
-      console.error("Error creating channel:", error);
+      console.error("Error creating chat:", error);
     }
   };
 
@@ -81,19 +80,19 @@ function MessagesContent() {
     if (!inputValue.trim() || !selectedChat) return;
 
     try {
-      await sendMsg({ channelId: selectedChat, content: inputValue });
+      await sendMsg(selectedChat, inputValue);
       setInputValue("");
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
 
-  // Auto-select first channel if available
+  // Auto-select first chat if available
   useEffect(() => {
-    if (!selectedChat && channels && channels.length > 0) {
-      setSelectedChat(channels[0].id);
+    if (!selectedChat && chats && chats.length > 0) {
+      setSelectedChat(chats[0].id);
     }
-  }, [channels, selectedChat]);
+  }, [chats, selectedChat]);
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -120,14 +119,32 @@ function MessagesContent() {
                   <h2 className="text-xl font-bold text-foreground">
                     Messages
                   </h2>
-                  <button
-                    onClick={() => setIsNewChatOpen(true)}
-                    className="p-2 bg-foreground text-background rounded-full hover:opacity-90 transition-opacity"
-                    aria-label="Start new chat"
-                  >
-                    <Plus size={20} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        console.log("Manual refresh triggered");
+                        fetchChats();
+                      }}
+                      className="p-2 border border-border rounded-full hover:bg-muted transition-opacity"
+                      aria-label="Refresh chats"
+                      title="Refresh"
+                    >
+                      <Search size={20} />
+                    </button>
+                    <button
+                      onClick={() => setIsNewChatOpen(true)}
+                      className="p-2 bg-foreground text-background rounded-full hover:opacity-90 transition-opacity"
+                      aria-label="Start new chat"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
                 </div>
+                {chatError && (
+                  <div className="mb-2 p-2 bg-red-500/10 border border-red-500/50 rounded text-red-500 text-sm">
+                    {chatError}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 bg-muted rounded-full px-4 py-2">
                   <Search size={18} className="text-muted-foreground" />
                   <input
@@ -148,35 +165,45 @@ function MessagesContent() {
                   <div className="p-4 text-center text-muted-foreground">
                     Loading chats...
                   </div>
-                ) : !channels || channels.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    No chats yet. Start a new conversation!
+                ) : !chats || chats.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-muted-foreground mb-2">
+                      No chats yet. Start a new conversation!
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Debug: {currentAccount.address?.slice(0, 10)}...
+                    </p>
                   </div>
                 ) : (
-                  channels.map((channel: Channel) => {
+                  chats.map((chat: any) => {
                     return (
                       <button
-                        key={channel.id}
+                        key={chat.id}
                         onClick={() => {
-                          setSelectedChat(channel.id);
+                          setSelectedChat(chat.id);
                           setShowMobileList(false);
                         }}
                         className={`w-full p-4 border-b border-border hover:bg-muted/30 transition-colors text-left ${
-                          selectedChat === channel.id ? "bg-muted/50" : ""
+                          selectedChat === chat.id ? "bg-muted/50" : ""
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0">
-                            {channel.name.charAt(0).toUpperCase()}
+                            {chat.user.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-foreground">
-                              {channel.name}
+                              {chat.user}
                             </div>
                             <div className="text-sm text-muted-foreground truncate">
-                              {channel.lastMessage?.text || "No messages yet"}
+                              {chat.lastMsg}
                             </div>
                           </div>
+                          {chat.unread > 0 && (
+                            <div className="bg-foreground text-background text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                              {chat.unread}
+                            </div>
+                          )}
                         </div>
                       </button>
                     );
@@ -202,21 +229,21 @@ function MessagesContent() {
                     >
                       <ArrowLeft size={20} />
                     </button>
-                    {channels &&
-                      channels.find((c: Channel) => c.id === selectedChat) &&
+                    {chats &&
+                      chats.find((c: any) => c.id === selectedChat) &&
                       (() => {
-                        const channel = channels.find(
-                          (c: Channel) => c.id === selectedChat
+                        const chat = chats.find(
+                          (c: any) => c.id === selectedChat
                         )!;
 
                         return (
                           <>
                             <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0">
-                              {channel.name.charAt(0).toUpperCase()}
+                              {chat.user.charAt(0).toUpperCase()}
                             </div>
                             <div>
                               <div className="font-semibold text-foreground">
-                                {channel.name}
+                                {chat.user}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 On Sui Network
@@ -229,7 +256,11 @@ function MessagesContent() {
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.length === 0 ? (
+                    {isLoadingMessages ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <p>Loading messages...</p>
+                      </div>
+                    ) : messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-muted-foreground">
                         <p>No messages yet. Start the conversation!</p>
                       </div>
@@ -308,7 +339,7 @@ function MessagesContent() {
         isOpen={isNewChatOpen}
         onClose={() => setIsNewChatOpen(false)}
         onStartChat={handleStartChat}
-        isLoading={isCreatingChannel}
+        isLoading={isCreatingChat}
       />
     </div>
   );
