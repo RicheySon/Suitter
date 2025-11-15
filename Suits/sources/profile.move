@@ -57,8 +57,6 @@ module suits::profile {
 
     // ===== Initialization =====
 
-    /// Initialize the UsernameRegistry as a shared object
-    /// This function is called once during module deployment
     fun init(ctx: &mut tx_context::TxContext) {
         let registry = UsernameRegistry {
             id: object::new(ctx),
@@ -69,25 +67,7 @@ module suits::profile {
 
     // ===== Public Functions =====
 
-    /// Create a new user profile with username validation and registration.
-    /// 
-    /// This function performs the following steps:
-    /// 1. Validates the username format (length and characters)
-    /// 2. Checks if the username is available in the registry
-    /// 3. Creates the profile object with initial values
-    /// 4. Registers the username in the registry atomically
-    /// 5. Emits a ProfileCreated event
-    /// 
-    /// # Arguments
-    /// * `registry` - Shared UsernameRegistry to check and register username
-    /// * `username` - Username as bytes (will be converted to String)
-    /// * `bio` - User biography as bytes
-    /// * `pfp_url` - Profile picture URL as bytes
-    /// * `ctx` - Transaction context
-    /// 
-    /// # Panics
-    /// * E_INVALID_USERNAME - If username is empty, too long, or contains invalid characters
-    /// * E_USERNAME_TAKEN - If username is already registered to another address
+
     public fun create_profile(
         registry: &mut UsernameRegistry,
         username: vector<u8>,
@@ -98,18 +78,11 @@ module suits::profile {
         let sender_addr = tx_context::sender(ctx);
         let username_string = utf8(username);
         
-        // Validate username format
-        // Username must be between 3 and 20 characters
         let username_length = std::string::length(&username_string);
         assert!(username_length >= 3 && username_length <= 20, E_INVALID_USERNAME);
         
-        // Check if username is already taken in the registry
-        // This ensures uniqueness across the entire platform
         assert!(!table::contains(&registry.usernames, username_string), E_USERNAME_TAKEN);
         
-        // Create the profile object with initial values
-        // Followers and following counts start at 0
-        // created_at will be set to 0 for now (clock integration in future tasks)
         let profile = Profile {
             id: object::new(ctx),
             owner: sender_addr,
@@ -121,41 +94,18 @@ module suits::profile {
             following_count: 0,
         };
 
-        // Register the username in the registry atomically with profile creation
-        // This prevents race conditions where two users try to claim the same username
         table::add(&mut registry.usernames, profile.username, sender_addr);
 
-        // Emit event for off-chain indexing and notifications
         event::emit(ProfileCreated {
             profile_id: object::id(&profile),
             owner: sender_addr,
             username: profile.username,
-            timestamp: 0, // Will be set with clock in future tasks
+            timestamp: 0, 
         });
 
         profile
     }
 
-    /// Update an existing user profile with authorization and username registry management.
-    /// 
-    /// This function performs the following steps:
-    /// 1. Verifies the caller is the profile owner (authorization check)
-    /// 2. If username is changing, validates the new username and updates registry
-    /// 3. Updates profile fields (bio and pfp_url always updated)
-    /// 4. Emits a ProfileUpdated event
-    /// 
-    /// # Arguments
-    /// * `profile` - Mutable reference to the profile being updated
-    /// * `registry` - Shared UsernameRegistry to manage username changes
-    /// * `username` - New username as bytes (can be same as current)
-    /// * `bio` - New biography as bytes
-    /// * `pfp_url` - New profile picture URL as bytes
-    /// * `ctx` - Transaction context
-    /// 
-    /// # Panics
-    /// * E_NOT_PROFILE_OWNER - If caller is not the profile owner
-    /// * E_INVALID_USERNAME - If new username format is invalid
-    /// * E_USERNAME_TAKEN - If new username is already taken by another user
     public fun update_profile(
         profile: &mut Profile,
         registry: &mut UsernameRegistry,
@@ -166,60 +116,36 @@ module suits::profile {
     ) {
         let sender_addr = tx_context::sender(ctx);
         
-        // Authorization check: Only the profile owner can update their profile
-        // This prevents unauthorized modifications to user identities
         assert!(profile.owner == sender_addr, E_NOT_PROFILE_OWNER);
         
         let new_username = utf8(username);
         
-        // Check if username is being changed
         if (new_username != profile.username) {
-            // Validate new username format (3-20 characters)
             let username_length = std::string::length(&new_username);
             assert!(username_length >= 3 && username_length <= 20, E_INVALID_USERNAME);
             
-            // Check if new username is available
-            // Must not be taken by another user
             assert!(!table::contains(&registry.usernames, new_username), E_USERNAME_TAKEN);
             
-            // Remove old username from registry
-            // This frees up the old username for other users
             table::remove(&mut registry.usernames, profile.username);
             
-            // Register new username in registry
-            // This atomically claims the new username
             table::add(&mut registry.usernames, new_username, sender_addr);
             
-            // Update profile username
             profile.username = new_username;
         };
         
-        // Update other profile fields
-        // These can be updated regardless of username change
         profile.bio = utf8(bio);
         profile.pfp_url = utf8(pfp_url);
         
-        // Emit event for off-chain indexing
         event::emit(ProfileUpdated {
             profile_id: object::id(profile),
             owner: profile.owner,
-            timestamp: 0, // Will be set with clock in future tasks
+            timestamp: 0, 
         });
     }
 
     // ===== Query Functions =====
 
-    /// Check if a username is available for registration.
-    /// 
-    /// Returns true if the username is not yet registered in the system,
-    /// false if it's already taken by another user.
-    /// 
-    /// # Arguments
-    /// * `registry` - Reference to the UsernameRegistry
-    /// * `username` - Username to check as bytes
-    /// 
-    /// # Returns
-    /// * `bool` - true if available, false if taken
+
     public fun check_username_available(
         registry: &UsernameRegistry,
         username: vector<u8>
@@ -228,20 +154,7 @@ module suits::profile {
         !table::contains(&registry.usernames, username_string)
     }
 
-    /// Get the owner address for a given username.
-    /// 
-    /// This function looks up which address owns a particular username.
-    /// Useful for finding a user's profile by their username.
-    /// 
-    /// # Arguments
-    /// * `registry` - Reference to the UsernameRegistry
-    /// * `username` - Username to look up as bytes
-    /// 
-    /// # Returns
-    /// * `address` - The owner address of the username
-    /// 
-    /// # Panics
-    /// * E_PROFILE_NOT_FOUND - If username is not registered
+
     public fun get_profile_owner_by_username(
         registry: &UsernameRegistry,
         username: vector<u8>

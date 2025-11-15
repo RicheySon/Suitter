@@ -1,6 +1,8 @@
 import { ConnectButton } from "@mysten/dapp-kit";
-import { Box, Container, Flex, Heading } from "@radix-ui/themes";
+import { Box, Container, Flex, Heading, Tabs } from "@radix-ui/themes";
 import { WalletStatus } from "./WalletStatus";
+import { CreateSuitForm } from "./components/CreateSuitForm";
+import { SuitsList } from "./components/SuitsList";
 
 function App() {
   return (
@@ -15,7 +17,7 @@ function App() {
         }}
       >
         <Box>
-          <Heading>dApp Starter Template</Heading>
+          <Heading>Suitter - Decentralized Social Network</Heading>
         </Box>
 
         <Box>
@@ -27,9 +29,32 @@ function App() {
           mt="5"
           pt="2"
           px="4"
-          style={{ background: "var(--gray-a2)", minHeight: 500 }}
+          style={{ minHeight: 500 }}
         >
-          <WalletStatus />
+          <Tabs.Root defaultValue="feed">
+            <Tabs.List>
+              <Tabs.Trigger value="feed">Feed</Tabs.Trigger>
+              <Tabs.Trigger value="create">Create Suit</Tabs.Trigger>
+              <Tabs.Trigger value="wallet">Wallet Info</Tabs.Trigger>
+            </Tabs.List>
+
+            <Box pt="4">
+              <Tabs.Content value="feed">
+                <Flex direction="column" gap="4">
+                  <Heading size="6">Latest Suits</Heading>
+                  <SuitsList />
+                </Flex>
+              </Tabs.Content>
+
+              <Tabs.Content value="create">
+                <CreateSuitForm />
+              </Tabs.Content>
+
+              <Tabs.Content value="wallet">
+                <WalletStatus />
+              </Tabs.Content>
+            </Box>
+          </Tabs.Root>
         </Container>
       </Container>
     </>
