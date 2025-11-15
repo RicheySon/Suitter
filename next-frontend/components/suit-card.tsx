@@ -119,20 +119,20 @@ export function SuitCard({
                     <span className="text-muted-foreground">@{handle}</span>
                   </div>
                   <div className="flex items-center">
-                  <span className="text-muted-foreground hover:underline">
-                    {formatTime(timestamp)}
-                  </span>
-                  {isNFT && (
-                    <span
-                      className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
-                        isEncrypted
-                          ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
-                          : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                      }`}
-                    >
-                      {isEncrypted ? "🔐 NFT" : "📦 Suit"}
+                    <span className="text-muted-foreground hover:underline">
+                      {formatTime(timestamp)}
                     </span>
-                  )}
+                    {isNFT && (
+                      <span
+                        className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
+                          isEncrypted
+                            ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                            : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                        }`}
+                      >
+                        {isEncrypted ? "🔐 NFT" : "📦 Suit"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
