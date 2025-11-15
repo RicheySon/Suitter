@@ -22,11 +22,19 @@ interface SuitCardProps {
   replies: number;
   reposts: number;
   liked: boolean;
+  reposted?: boolean;
   isNFT?: boolean;
   nftValue?: number;
   currentBid?: number;
   isEncrypted?: boolean;
+  media?: {
+    type: "image" | "video";
+    url: string;
+  };
   onLike: (id: string) => void;
+  onRepost?: (id: string) => void;
+  onReply?: (id: string) => void;
+  onShare?: (id: string) => void;
   onBookmark: (id: string, isBookmarked: boolean) => void;
   bookmarked?: boolean;
 }
@@ -42,11 +50,16 @@ export function SuitCard({
   replies,
   reposts,
   liked,
+  reposted = false,
   isNFT = true,
   nftValue = 0.5,
   currentBid = 0.75,
   isEncrypted = false,
+  media,
   onLike,
+  onRepost,
+  onReply,
+  onShare,
   onBookmark,
   bookmarked = false,
 }: SuitCardProps) {
@@ -94,29 +107,34 @@ export function SuitCard({
             {/* Header with Author Info and Three-Dot Menu */}
             <div className="flex items-center justify-between">
               {/* Avatar */}
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                {avatar}
-              </div>
-              <div className="flex items-center gap-1 text-sm flex-wrap">
-                <span className="font-semibold text-foreground hover:underline">
-                  {author}
-                </span>
-                <span className="text-muted-foreground">@{handle}</span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground hover:underline">
-                  {formatTime(timestamp)}
-                </span>
-                {isNFT && (
-                  <span
-                    className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
-                      isEncrypted
-                        ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
-                        : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                    }`}
-                  >
-                    {isEncrypted ? "🔐 NFT" : "📦 Suit"}
-                  </span>
-                )}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0">
+                  {avatar}
+                </div>
+                <div className="flex text-sm flex-wrap gap-10 items-start">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-foreground hover:underline">
+                      {author}
+                    </span>
+                    <span className="text-muted-foreground">@{handle}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-muted-foreground hover:underline">
+                      {formatTime(timestamp)}
+                    </span>
+                    {isNFT && (
+                      <span
+                        className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
+                          isEncrypted
+                            ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                            : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                        }`}
+                      >
+                        {isEncrypted ? "🔐 NFT" : "📦 Suit"}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="relative">
@@ -173,22 +191,60 @@ export function SuitCard({
           </div>
 
           {/* Content */}
-          <p className="mt-2 text-base text-foreground break-words">
+          <p className="mt-2 text-base text-foreground wrap-break-word">
             {content}
           </p>
 
+          {/* Media */}
+          {media && (
+            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+              {media.type === "image" ? (
+                <img
+                  src={media.url}
+                  alt="Post media"
+                  className="w-full max-h-[500px] object-cover"
+                />
+              ) : (
+                <video
+                  src={media.url}
+                  controls
+                  className="w-full max-h-[500px] object-contain bg-black"
+                />
+              )}
+            </div>
+          )}
+
           {/* Action Buttons with Icons and Counts */}
           <div className="mt-3 flex justify-between text-muted-foreground max-w-md">
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReply?.(id);
+              }}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
               <MessageCircle size={16} />
               <span className="text-xs">{replies}</span>
             </button>
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
-              <Repeat2 size={16} />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRepost?.(id);
+              }}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
+              <Repeat2
+                size={16}
+                color={reposted ? "#000" : "currentColor"}
+                className={reposted ? "text-green-600 dark:text-green-400" : ""}
+              />
               <span className="text-xs">{reposts}</span>
             </button>
             <button
-              onClick={() => onLike(id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike(id);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <Heart
@@ -199,7 +255,10 @@ export function SuitCard({
               <span className="text-xs">{likes}</span>
             </button>
             <button
-              onClick={() => onBookmark(id, !bookmarked)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBookmark(id, !bookmarked);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <Bookmark
@@ -209,7 +268,13 @@ export function SuitCard({
               />
               <span className="text-xs">{bookmarked ? "1" : "0"}</span>
             </button>
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare?.(id);
+              }}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
               <Share size={16} />
             </button>
           </div>

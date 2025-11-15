@@ -1,46 +1,44 @@
-
-
-import { X } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 interface BidModalProps {
-  isOpen: boolean
-  onClose: () => void
-  suitId: string
-  suitName: string
-  currentValue: number
-  currentBid: number
-  onPlaceBid: (amount: number) => void
+  isOpen: boolean;
+  onClose: () => void;
+  suitId: string;
+  suitName: string;
+  currentValue: number;
+  currentBid: number;
+  onPlaceBid: (amount: number) => void;
 }
 
 export function BidModal({
   isOpen,
   onClose,
-  suitId,
+  suitId: _suitId,
   suitName,
   currentValue,
   currentBid,
   onPlaceBid,
 }: BidModalProps) {
-  const [bidAmount, setBidAmount] = useState((currentBid + 0.1).toString())
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [bidAmount, setBidAmount] = useState((currentBid + 0.1).toString());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      onPlaceBid(parseFloat(bidAmount))
-      setBidAmount((currentBid + 0.1).toString())
-      onClose()
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      onPlaceBid(parseFloat(bidAmount));
+      setBidAmount((currentBid + 0.1).toString());
+      onClose();
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  const minBid = currentBid + 0.1
+  const minBid = currentBid + 0.1;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -71,7 +69,9 @@ export function BidModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-muted/30 p-3 rounded-lg border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Original Value</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                Original Value
+              </p>
               <p className="font-bold text-foreground">{currentValue} SUI</p>
             </div>
             <div className="bg-muted/30 p-3 rounded-lg border border-border">
@@ -117,11 +117,11 @@ export function BidModal({
               disabled={isSubmitting || parseFloat(bidAmount) < minBid}
               className="flex-1 py-2 px-4 bg-foreground text-background rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {isSubmitting ? 'Placing...' : 'Place Bid'}
+              {isSubmitting ? "Placing..." : "Place Bid"}
             </button>
           </div>
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

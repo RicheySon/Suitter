@@ -1,8 +1,10 @@
 import { Bookmark } from 'lucide-react'
 import { Heart, MessageCircle, Repeat2, Share } from 'lucide-react'
-import { NavHeader } from '../../components/nav-header'
+import { MinimalHeader } from '../../components/minimal-header'
+import { AppSidebar } from '../../components/app-sidebar'
 import { SuiProvider } from '../../components/sui-context'
 import { ComposeModal } from '../../components/compose-modal'
+import { TrendingSidebar } from '../../components/trending-sidebar'
 import { useState } from 'react'
 
 interface BookmarkedPost {
@@ -54,6 +56,7 @@ const SAMPLE_BOOKMARKS: BookmarkedPost[] = [
 ]
 
 function BookmarksContent() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isComposeOpen, setIsComposeOpen] = useState(false)
   const [bookmarks, setBookmarks] = useState<BookmarkedPost[]>(SAMPLE_BOOKMARKS)
 
@@ -67,9 +70,17 @@ function BookmarksContent() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <NavHeader />
-      
-      <main className="flex-1 overflow-hidden max-w-2xl w-full mx-auto border-r border-border">
+      <MinimalHeader onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          onCompose={() => setIsComposeOpen(true)}
+        />
+
+        {/* Main Feed */}
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
         <div className="h-full flex flex-col overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-3 z-10 flex items-center gap-3">
@@ -137,7 +148,10 @@ function BookmarksContent() {
             ))
           )}
         </div>
-      </main>
+        </main>
+
+        <TrendingSidebar />
+      </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />
     </div>

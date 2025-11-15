@@ -23,7 +23,7 @@ export default function HomePage() {
           />
 
           {/* Main Feed */}
-          <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
+          <main className="flex-1 overflow-y-auto border-r border-border max-w-5xl">
             <HomeFeed onCompose={() => setIsComposeOpen(true)} />
           </main>
 

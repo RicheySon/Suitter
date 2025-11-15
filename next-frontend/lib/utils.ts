@@ -20,3 +20,10 @@ export function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+export function truncateAddress(address: string, startChars: number = 6, endChars: number = 4): string {
+  if (!address || address.length <= startChars + endChars) {
+    return address
+  }
+  return `${address.slice(0, startChars)}...${address.slice(-endChars)}`
+}

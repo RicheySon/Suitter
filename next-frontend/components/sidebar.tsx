@@ -1,26 +1,40 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Menu, X, Heart, Home, Megaphone as Explore, Mail, Bookmark, User, MoreHorizontal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import clsx from 'clsx'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Menu,
+  X,
+  Heart,
+  Home,
+  Megaphone as Explore,
+  Mail,
+  Bookmark,
+  User,
+  MoreHorizontal,
+} from "lucide-react";
+import clsx from "clsx";
 
 interface SidebarProps {
-  isOpen: boolean
-  onToggle: () => void
-  onCompose: () => void
+  isOpen: boolean;
+  onToggle: () => void;
+  onCompose: () => void;
 }
 
 export default function Sidebar({ isOpen, onToggle, onCompose }: SidebarProps) {
-  const [activePage, setActivePage] = useState('home')
+  const [activePage, setActivePage] = useState("home");
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home, href: '/' },
-    { id: 'explore', label: 'Explore', icon: Explore, href: '/explore' },
-    { id: 'notifications', label: 'Notifications', icon: Heart, href: '/notifications' },
-    { id: 'messages', label: 'Messages', icon: Mail, href: '/messages' },
-    { id: 'bookmarks', label: 'Bookmarks', icon: Bookmark, href: '/bookmarks' },
-    { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
-  ]
+    { id: "home", label: "Home", icon: Home, href: "/" },
+    { id: "explore", label: "Explore", icon: Explore, href: "/explore" },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: Heart,
+      href: "/notifications",
+    },
+    { id: "messages", label: "Messages", icon: Mail, href: "/messages" },
+    { id: "bookmarks", label: "Bookmarks", icon: Bookmark, href: "/bookmarks" },
+    { id: "profile", label: "Profile", icon: User, href: "/profile" },
+  ];
 
   return (
     <>
@@ -43,8 +57,8 @@ export default function Sidebar({ isOpen, onToggle, onCompose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed lg:static w-72 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col transition-all duration-300 z-30',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          "fixed lg:static w-72 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col transition-all duration-300 z-30",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo */}
@@ -55,35 +69,35 @@ export default function Sidebar({ isOpen, onToggle, onCompose }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 p-4 lg:p-6 space-y-4">
           {navItems.map((item) => {
-            const Icon = item.icon
+            const Icon = item.icon;
             return (
               <Link key={item.id} to={item.href}>
                 <button
                   onClick={() => setActivePage(item.id)}
                   className={clsx(
-                    'w-full flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-lg',
+                    "w-full flex items-center gap-4 px-4 py-3 rounded-full transition-colors text-lg",
                     activePage === item.id
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'hover:bg-sidebar-accent/10 text-sidebar-foreground'
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "hover:bg-sidebar-accent/10 text-sidebar-foreground"
                   )}
                 >
                   <Icon size={24} />
                   <span className="hidden sm:inline">{item.label}</span>
                 </button>
               </Link>
-            )
+            );
           })}
         </nav>
 
         {/* Compose Button */}
         <div className="p-4 lg:p-6 border-t border-sidebar-border">
-          <Button
+          <button
             onClick={onCompose}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg font-bold rounded-full"
           >
             <span className="hidden sm:inline">Post</span>
             <span className="sm:hidden">+</span>
-          </Button>
+          </button>
         </div>
 
         {/* User Profile */}
@@ -95,7 +109,9 @@ export default function Sidebar({ isOpen, onToggle, onCompose }: SidebarProps) {
               </div>
               <div className="hidden sm:block text-left">
                 <div className="font-semibold text-sm">Alex Johnson</div>
-                <div className="text-xs text-sidebar-foreground/60">@alexjohnson</div>
+                <div className="text-xs text-sidebar-foreground/60">
+                  @alexjohnson
+                </div>
               </div>
             </div>
             <MoreHorizontal size={20} className="hidden sm:block" />
@@ -103,5 +119,5 @@ export default function Sidebar({ isOpen, onToggle, onCompose }: SidebarProps) {
         </div>
       </aside>
     </>
-  )
+  );
 }

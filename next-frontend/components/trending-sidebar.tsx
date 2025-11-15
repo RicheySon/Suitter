@@ -44,7 +44,7 @@ const TRENDING_TOPICS: Trend[] = [
 
 export function TrendingSidebar() {
   return (
-    <aside className="hidden lg:block w-80 border-l border-border bg-background flex flex-col h-screen">
+    <aside className="hidden lg:block w-80 border-l border-border bg-background md:flex flex-col h-screen">
       {/* Search Bar */}
       <div className="p-4 sticky top-0 bg-background/80 backdrop-blur border-b border-border z-10">
         <div className="flex items-center gap-3 bg-muted/50 px-4 py-2 rounded-full">
