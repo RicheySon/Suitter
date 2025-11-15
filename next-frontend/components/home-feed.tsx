@@ -513,7 +513,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       </div>
 
       {/* Compose Section */}
-      {address && tab !== "feed" && (
+      t{address && tab !== "feed" && (
         <div className="border-b border-border p-4">
           <button
             onClick={onCompose}
