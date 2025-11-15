@@ -1,11 +1,3 @@
-/// Messaging module for encrypted peer-to-peer communication on Suitter
-/// Handles chat creation, message sending, and read receipts
-/// 
-/// This module provides:
-/// - Encrypted peer-to-peer messaging between users
-/// - Chat deduplication using ChatRegistry
-/// - Read receipts for message tracking
-/// - Authorization checks to ensure only participants can access chats
 module suits::messaging {
     use sui::clock::{Self, Clock};
     use sui::event;
@@ -13,48 +5,33 @@ module suits::messaging {
 
     // ===== Error Constants =====
     
-    /// Caller is not a participant in the chat
     const E_NOT_PARTICIPANT: u64 = 40;
-    /// Invalid message index provided
     const E_INVALID_MESSAGE_INDEX: u64 = 41;
-    /// User cannot message themselves
     const E_CANNOT_MESSAGE_SELF: u64 = 42;
-    /// Message is already marked as read
     const E_MESSAGE_ALREADY_READ: u64 = 43;
-    /// Encrypted message content is empty
     const E_EMPTY_MESSAGE: u64 = 44;
 
     // ===== Data Structures =====
 
-    /// Represents a single message in a conversation
-    /// Messages are encrypted client-side before being stored on-chain
-    /// The content_hash provides integrity verification
     public struct Message has store {
         sender: address,
-        /// Client-side encrypted message content as raw bytes
         encrypted_message: vector<u8>,
-        /// Hash of the original message for integrity verification
         content_hash: vector<u8>,
         sent_timestamp: u64,
         is_read: bool,
     }
 
-    /// Represents a conversation between two users
-    /// Uses participant_1 and participant_2 instead of sender/receiver
-    /// to clarify that both users have equal status in the conversation
+    
     public struct Chat has key, store {
         id: object::UID,
-        /// First participant in the chat (determined by sorted addresses)
         participant_1: address,
-        /// Second participant in the chat (determined by sorted addresses)
         participant_2: address,
-        /// All messages in chronological order
         messages: vector<Message>,
-        /// Timestamp when the chat was created
         created_at: u64,
     }
 
-    /// Event emitted when a new chat is created
+    // ===== Events =====
+
     public struct ChatCreated has copy, drop {
         chat_id: ID,
         participant_1: address,
@@ -62,7 +39,6 @@ module suits::messaging {
         timestamp: u64,
     }
 
-    /// Event emitted when a message is sent
     public struct MessageSent has copy, drop {
         chat_id: ID,
         sender: address,
@@ -71,7 +47,6 @@ module suits::messaging {
         timestamp: u64,
     }
 
-    /// Event emitted when a message is marked as read
     public struct MessageRead has copy, drop {
         chat_id: ID,
         message_index: u64,
@@ -80,20 +55,14 @@ module suits::messaging {
         timestamp: u64,
     }
 
-    /// Registry to find chats between users and prevent duplicates
-    /// Uses composite key from sorted participant addresses to ensure
-    /// only one chat exists between any two users
+
     public struct ChatRegistry has key {
         id: object::UID,
-        /// Maps composite key (sorted addresses) to Chat ID
         chats: Table<vector<u8>, ID>,
     }
 
     // ===== Initialization =====
 
-    /// Initialize the ChatRegistry as a shared object
-    /// This function is called once during module deployment
-    /// The registry enables efficient chat lookup and prevents duplicate chats
     fun init(ctx: &mut tx_context::TxContext) {
         let registry = ChatRegistry {
             id: object::new(ctx),
@@ -102,34 +71,26 @@ module suits::messaging {
         transfer::share_object(registry);
     }
 
-    // ===== Helper Functions =====
+    // ===== Functions =====
 
-    /// Creates a composite key from two addresses for chat lookup
-    /// Sorts addresses to ensure consistent key regardless of who initiates
-    /// This prevents duplicate chats between the same two users
     fun create_chat_key(addr1: address, addr2: address): vector<u8> {
         let mut key = std::vector::empty<u8>();
         
-        // Convert addresses to bytes for comparison
         let bytes1 = std::bcs::to_bytes(&addr1);
         let bytes2 = std::bcs::to_bytes(&addr2);
         
-        // Sort addresses by comparing their byte representations
         let (first, second) = if (compare_bytes(&bytes1, &bytes2)) {
             (addr1, addr2)
         } else {
             (addr2, addr1)
         };
         
-        // Concatenate sorted addresses as bytes
         std::vector::append(&mut key, std::bcs::to_bytes(&first));
         std::vector::append(&mut key, std::bcs::to_bytes(&second));
         
         key
     }
 
-    /// Compares two byte vectors lexicographically
-    /// Returns true if bytes1 < bytes2
     fun compare_bytes(bytes1: &vector<u8>, bytes2: &vector<u8>): bool {
         let len1 = std::vector::length(bytes1);
         let len2 = std::vector::length(bytes2);
@@ -151,24 +112,12 @@ module suits::messaging {
         len1 < len2
     }
 
-    /// Checks if the caller is a participant in the chat
     fun is_participant(chat: &Chat, caller: address): bool {
         caller == chat.participant_1 || caller == chat.participant_2
     }
 
     // ===== Public Functions =====
 
-    /// Starts a new chat or returns existing chat between two users
-    /// Uses ChatRegistry to prevent duplicate chats
-    /// 
-    /// # Arguments
-    /// * `other_user` - The address of the other participant
-    /// * `registry` - The shared ChatRegistry for lookup
-    /// * `clock` - Clock for timestamp
-    /// * `ctx` - Transaction context
-    /// 
-    /// # Aborts
-    /// * `E_CANNOT_MESSAGE_SELF` - If user tries to message themselves
     public fun start_chat(
         other_user: address,
         registry: &mut ChatRegistry,
@@ -177,19 +126,14 @@ module suits::messaging {
     ) {
         let sender = tx_context::sender(ctx);
         
-        // Prevent self-messaging
         assert!(sender != other_user, E_CANNOT_MESSAGE_SELF);
         
-        // Create composite key from sorted addresses
         let chat_key = create_chat_key(sender, other_user);
         
-        // Check if chat already exists in registry
         if (table::contains(&registry.chats, chat_key)) {
-            // Chat already exists, no need to create a new one
             return
         };
         
-        // Determine participant order (sorted by byte comparison)
         let sender_bytes = std::bcs::to_bytes(&sender);
         let other_bytes = std::bcs::to_bytes(&other_user);
         let (participant_1, participant_2) = if (compare_bytes(&sender_bytes, &other_bytes)) {
@@ -210,10 +154,9 @@ module suits::messaging {
 
         let chat_id = object::uid_to_inner(&chat.id);
 
-        // Register chat in registry
+        // Register chat in registr
         table::add(&mut registry.chats, chat_key, chat_id);
 
-        // Emit ChatCreated event
         event::emit(ChatCreated {
             chat_id,
             participant_1,
@@ -221,24 +164,10 @@ module suits::messaging {
             timestamp,
         });
 
-        // Share the Chat object so both participants can access it
         transfer::share_object(chat);
     }
 
-    /// Sends an encrypted message in a chat
-    /// Only participants can send messages
-    /// Messages are encrypted client-side before being passed to this function
-    /// 
-    /// # Arguments
-    /// * `chat` - The Chat object to send message in
-    /// * `encrypted_message` - Client-side encrypted message content as bytes
-    /// * `content_hash` - Hash of original message for integrity
-    /// * `clock` - Clock for timestamp
-    /// * `ctx` - Transaction context
-    /// 
-    /// # Aborts
-    /// * `E_NOT_PARTICIPANT` - If sender is not a participant in the chat
-    /// * `E_EMPTY_MESSAGE` - If encrypted_message is empty
+  
     public fun send_message(
         chat: &mut Chat,
         encrypted_message: vector<u8>,
@@ -248,15 +177,12 @@ module suits::messaging {
     ) {
         let sender = tx_context::sender(ctx);
         
-        // Verify sender is a participant in this chat
         assert!(is_participant(chat, sender), E_NOT_PARTICIPANT);
         
-        // Validate encrypted message is not empty
         assert!(!vector::is_empty(&encrypted_message), E_EMPTY_MESSAGE);
 
         let sent_timestamp = clock::timestamp_ms(clock);
         
-        // Create Message struct with encrypted content
         let message = Message {
             sender,
             encrypted_message,
@@ -265,18 +191,15 @@ module suits::messaging {
             is_read: false,
         };
 
-        // Append message to chat's message vector
         vector::push_back(&mut chat.messages, message);
         let message_index = vector::length(&chat.messages) - 1;
 
-        // Determine receiver (the other participant)
         let receiver = if (sender == chat.participant_1) { 
             chat.participant_2 
         } else { 
             chat.participant_1 
         };
 
-        // Emit MessageSent event for real-time updates
         event::emit(MessageSent {
             chat_id: object::uid_to_inner(&chat.id),
             sender,
@@ -286,21 +209,7 @@ module suits::messaging {
         });
     }
 
-    /// Marks a message as read
-    /// Only the recipient (not the sender) can mark a message as read
-    /// This implements read receipts for the messaging system
-    /// 
-    /// # Arguments
-    /// * `chat` - The Chat object containing the message
-    /// * `message_index` - Index of the message to mark as read
-    /// * `clock` - Clock for timestamp
-    /// * `ctx` - Transaction context
-    /// 
-    /// # Aborts
-    /// * `E_NOT_PARTICIPANT` - If caller is not a participant
-    /// * `E_INVALID_MESSAGE_INDEX` - If message_index is out of bounds
-    /// * `E_MESSAGE_ALREADY_READ` - If message is already marked as read
-    /// * `E_NOT_PARTICIPANT` - If caller is the message sender (can't mark own message as read)
+   
     public fun mark_as_read(
         chat: &mut Chat,
         message_index: u64,
@@ -309,28 +218,21 @@ module suits::messaging {
     ) {
         let caller = tx_context::sender(ctx);
         
-        // Verify caller is a participant in this chat
         assert!(is_participant(chat, caller), E_NOT_PARTICIPANT);
         
-        // Validate message_index is within bounds
         let messages_len = vector::length(&chat.messages);
         assert!(message_index < messages_len, E_INVALID_MESSAGE_INDEX);
 
-        // Get mutable reference to the message
         let message = vector::borrow_mut(&mut chat.messages, message_index);
         
-        // Verify caller is not the message sender (can't mark own message as read)
         assert!(caller != message.sender, E_NOT_PARTICIPANT);
         
-        // Check if message is already read
         assert!(!message.is_read, E_MESSAGE_ALREADY_READ);
 
         let original_sender = message.sender;
         
-        // Update is_read flag
         message.is_read = true;
 
-        // Emit MessageRead event for read receipt notification
         event::emit(MessageRead {
             chat_id: object::uid_to_inner(&chat.id),
             message_index,
