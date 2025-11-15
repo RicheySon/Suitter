@@ -1,74 +1,72 @@
-
-
-import { X } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { X } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface OwnershipRecord {
-  owner: string
-  handle: string
-  avatar: string
-  amount: number
-  type: 'purchase' | 'bid' | 'mint' | 'transfer'
-  date: number
+  owner: string;
+  handle: string;
+  avatar: string;
+  amount: number;
+  type: "purchase" | "bid" | "mint" | "transfer";
+  date: number;
 }
 
 interface OwnershipHistoryModalProps {
-  isOpen: boolean
-  onClose: () => void
-  suitId: string
-  suitName: string
-  history: OwnershipRecord[]
+  isOpen: boolean;
+  onClose: () => void;
+  suitId: string;
+  suitName: string;
+  history: OwnershipRecord[];
 }
 
 export function OwnershipHistoryModal({
   isOpen,
   onClose,
-  suitId,
+  suitId: _suitId,
   suitName,
   history,
 }: OwnershipHistoryModalProps) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'mint':
-        return 'bg-blue-500/20 text-blue-700 dark:text-blue-400'
-      case 'purchase':
-        return 'bg-green-500/20 text-green-700 dark:text-green-400'
-      case 'bid':
-        return 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
-      case 'transfer':
-        return 'bg-purple-500/20 text-purple-700 dark:text-purple-400'
+      case "mint":
+        return "bg-blue-500/20 text-blue-700 dark:text-blue-400";
+      case "purchase":
+        return "bg-green-500/20 text-green-700 dark:text-green-400";
+      case "bid":
+        return "bg-amber-500/20 text-amber-700 dark:text-amber-400";
+      case "transfer":
+        return "bg-purple-500/20 text-purple-700 dark:text-purple-400";
       default:
-        return 'bg-gray-500/20 text-gray-700 dark:text-gray-400'
+        return "bg-gray-500/20 text-gray-700 dark:text-gray-400";
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'mint':
-        return 'Minted'
-      case 'purchase':
-        return 'Purchased'
-      case 'bid':
-        return 'Bid Placed'
-      case 'transfer':
-        return 'Transferred'
+      case "mint":
+        return "Minted";
+      case "purchase":
+        return "Purchased";
+      case "bid":
+        return "Bid Placed";
+      case "transfer":
+        return "Transferred";
       default:
-        return type
+        return type;
     }
-  }
+  };
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+    const date = new Date(timestamp);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -115,7 +113,11 @@ export function OwnershipHistoryModal({
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${getTypeColor(record.type)}`}>
+                  <span
+                    className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${getTypeColor(
+                      record.type
+                    )}`}
+                  >
                     {getTypeLabel(record.type)}
                   </span>
                   <span className="text-sm font-bold text-foreground">
@@ -128,5 +130,5 @@ export function OwnershipHistoryModal({
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

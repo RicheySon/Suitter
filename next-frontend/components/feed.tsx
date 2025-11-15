@@ -1,22 +1,20 @@
-
-
-import { useState } from 'react'
-import { Heart, MessageCircle, Repeat2, Share, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from "react";
+import { Heart, MessageCircle, Repeat2, Share } from "lucide-react";
 
 interface FeedProps {
-  onCompose: () => void
+  onCompose: () => void;
 }
 
 export default function Feed({ onCompose }: FeedProps) {
   const [posts, setPosts] = useState([
     {
       id: 1,
-      author: 'Sarah Chen',
-      handle: '@sarahchen',
-      avatar: 'S',
-      content: 'Just launched Suitter, a modern social platform. The future of digital connection starts now! 🚀',
-      timestamp: '2h',
+      author: "Sarah Chen",
+      handle: "@sarahchen",
+      avatar: "S",
+      content:
+        "Just launched Suitter, a modern social platform. The future of digital connection starts now! 🚀",
+      timestamp: "2h",
       likes: 1234,
       replies: 342,
       retweets: 856,
@@ -24,11 +22,12 @@ export default function Feed({ onCompose }: FeedProps) {
     },
     {
       id: 2,
-      author: 'Developer Daily',
-      handle: '@devdaily',
-      avatar: 'D',
-      content: 'Building with Next.js 16 and Tailwind CSS feels so smooth. The developer experience is unmatched.',
-      timestamp: '4h',
+      author: "Developer Daily",
+      handle: "@devdaily",
+      avatar: "D",
+      content:
+        "Building with Next.js 16 and Tailwind CSS feels so smooth. The developer experience is unmatched.",
+      timestamp: "4h",
       likes: 892,
       replies: 156,
       retweets: 423,
@@ -36,25 +35,32 @@ export default function Feed({ onCompose }: FeedProps) {
     },
     {
       id: 3,
-      author: 'Tech News Hub',
-      handle: '@technewshub',
-      avatar: 'T',
-      content: 'New social media platform launches with focus on user privacy and authentic connections.',
-      timestamp: '6h',
+      author: "Tech News Hub",
+      handle: "@technewshub",
+      avatar: "T",
+      content:
+        "New social media platform launches with focus on user privacy and authentic connections.",
+      timestamp: "6h",
       likes: 2156,
       replies: 678,
       retweets: 1245,
       liked: false,
     },
-  ])
+  ]);
 
   const toggleLike = (id: number) => {
-    setPosts(posts.map(post =>
-      post.id === id
-        ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
-        : post
-    ))
-  }
+    setPosts(
+      posts.map((post) =>
+        post.id === id
+          ? {
+              ...post,
+              liked: !post.liked,
+              likes: post.liked ? post.likes - 1 : post.likes + 1,
+            }
+          : post
+      )
+    );
+  };
 
   return (
     <div className="w-full">
@@ -77,9 +83,12 @@ export default function Feed({ onCompose }: FeedProps) {
               rows={3}
             />
             <div className="flex justify-end mt-4">
-              <Button onClick={onCompose} className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-full font-bold text-lg">
+              <button
+                onClick={onCompose}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-full font-bold text-lg"
+              >
                 Post
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -101,7 +110,9 @@ export default function Feed({ onCompose }: FeedProps) {
                 <span className="font-bold hover:underline">{post.author}</span>
                 <span className="text-muted-foreground">@{post.handle}</span>
                 <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground hover:underline">{post.timestamp}</span>
+                <span className="text-muted-foreground hover:underline">
+                  {post.timestamp}
+                </span>
               </div>
 
               {/* Content */}
@@ -126,7 +137,11 @@ export default function Feed({ onCompose }: FeedProps) {
                   onClick={() => toggleLike(post.id)}
                   className="flex items-center gap-2 hover:text-destructive hover:bg-destructive/10 p-2 rounded-full transition-colors"
                 >
-                  <Heart size={16} fill={post.liked ? 'currentColor' : 'none'} color={post.liked ? 'currentColor' : undefined} />
+                  <Heart
+                    size={16}
+                    fill={post.liked ? "currentColor" : "none"}
+                    color={post.liked ? "currentColor" : undefined}
+                  />
                 </button>
                 <button className="flex items-center gap-2 hover:text-primary hover:bg-primary/10 p-2 rounded-full transition-colors">
                   <Share size={16} />
@@ -137,5 +152,5 @@ export default function Feed({ onCompose }: FeedProps) {
         </article>
       ))}
     </div>
-  )
+  );
 }
