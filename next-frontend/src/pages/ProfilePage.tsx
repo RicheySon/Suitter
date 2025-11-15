@@ -203,7 +203,7 @@ function ProfileContent() {
           onCompose={() => setIsComposeOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl relative">
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-4xl relative">
           <div className="h-full flex flex-col overflow-y-auto">
             {hasProfile === false && (
               <div className="p-4 border-b border-border bg-amber-50 dark:bg-amber-950/20 flex flex-col gap-3">

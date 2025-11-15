@@ -80,7 +80,7 @@ function BookmarksContent() {
         />
 
         {/* Main Feed */}
-        <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
+        <main className="flex-1 overflow-y-auto border-r border-border max-w-4xl">
         <div className="h-full flex flex-col overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-3 z-10 flex items-center gap-3">

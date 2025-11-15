@@ -164,7 +164,7 @@ function AssetsContent() {
             onCompose={() => setIsComposeOpen(true)}
           />
 
-          <main className="flex-1 overflow-y-auto border-r border-border max-w-2xl">
+          <main className="flex-1 overflow-y-auto border-r border-border max-w-4xl">
             <div className="h-full flex flex-col items-center justify-center p-8 text-center">
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
                 <Wallet size={48} className="text-muted-foreground" />
