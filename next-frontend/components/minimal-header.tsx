@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
-import { ConnectButton, useConnectWallet } from "@mysten/dapp-kit";
+import {
+  ConnectButton,
+  useConnectWallet,
+  useCurrentAccount,
+} from "@mysten/dapp-kit";
 import { Menu } from "lucide-react";
+import { useState } from "react";
 
 interface MinimalHeaderProps {
   onMenuClick: () => void;
@@ -33,7 +38,7 @@ export function MinimalHeader({ onMenuClick }: MinimalHeaderProps) {
             </span>
           </Link>
 
-          <div className="ml-auto">
+          <div className="ml-auto z-100">
             <ConnectButton className="border-2 p-2 rounded-lg" />
           </div>
         </div>
