@@ -11,6 +11,12 @@ importers:
       '@mysten/dapp-kit':
         specifier: ^0.19.9
         version: 0.19.9(@tanstack/react-query@5.90.9(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.26))(@types/react@18.3.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
+      '@mysten/messaging':
+        specifier: ^0.0.3
+        version: 0.0.3(typescript@5.9.3)
+      '@mysten/seal':
+        specifier: ^0.9.4
+        version: 0.9.4(typescript@5.9.3)
       '@mysten/sui':
         specifier: 1.45.0
         version: 1.45.0(typescript@5.9.3)
@@ -566,6 +572,13 @@ packages:
       '@tanstack/react-query': ^5.0.0
       react: '*'
 
+  '@mysten/messaging@0.0.3':
+    resolution: {integrity: sha512-BI57/vsNYPu7xU9EtRY+uy7933qhbJ1epfWvLcpZn1vrJkd+2ALVCnwoHgP+j4kN2A4biY06aavRdkucfKcEtw==}
+    engines: {pnpm: '>=10.17.0'}
+
+  '@mysten/seal@0.9.4':
+    resolution: {integrity: sha512-bVq1zm7MkBIf/PcXoVAbKxJ78HBrtT5sg+lss/kYHW56llmvw/nxm2vBR9NLouqW/5tvNvyfXqffum/0eivUug==}
+
   '@mysten/slush-wallet@0.2.10':
     resolution: {integrity: sha512-+Km3FSGMJ1RoRMijpiq9YFL0rocKPAsBolUdd8pjI7PR9wYgA/wTRV5gJmzVLgJTGfkEkJOqdOccg51XGw1NBw==}
 
@@ -583,6 +596,12 @@ packages:
 
   '@mysten/wallet-standard@0.19.7':
     resolution: {integrity: sha512-p0W1WUkXqUXtmCL8wlkjToSXoqTj5zRH2dVI+yhxrFCiR236SdgZ+BGIZrx0yaE/igzttsTaVztbA7jMc8t6oQ==}
+
+  '@mysten/walrus-wasm@0.1.1':
+    resolution: {integrity: sha512-j+12gNbPAIkgY7g1d4aCF2rXDpgTLQsyjEdu0s7A8xlu/95u5quP7Tc7Jz7VLFfbtkJigBpGyPZ/8J2tZv4cJA==}
+
+  '@mysten/walrus@0.8.4':
+    resolution: {integrity: sha512-6pvp9/s0jHJb9uR6QjX8yCyzb0PbceOqylnUwNuMKvVG/cyHYgHSRlB4atQMJPHPPtspGnIYH53J5j+zd9+4/Q==}
 
   '@mysten/window-wallet-core@0.1.0':
     resolution: {integrity: sha512-QVFthpAv+HJBqoLjsE6gZylE28lrzEd/C68S5tyOCpRV6T3O+P3LCcFmNkLK8gNM6DJNHc/GZgM3f4rTNGOfAQ==}
@@ -2047,6 +2066,9 @@ packages:
   csstype@3.2.0:
     resolution: {integrity: sha512-si++xzRAY9iPp60roQiFta7OFbhrgvcthrhlNAGeQptSY25uJjkfUV8OArC3KLocB8JT8ohz+qgxWCmz8RhjIg==}
 
+  dataloader@2.2.3:
+    resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==}
+
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
@@ -3163,6 +3185,28 @@ snapshots:
       - react-dom
       - typescript
 
+  '@mysten/messaging@0.0.3(typescript@5.9.3)':
+    dependencies:
+      '@mysten/bcs': 1.9.2
+      '@mysten/seal': 0.9.4(typescript@5.9.3)
+      '@mysten/sui': 1.45.0(typescript@5.9.3)
+      '@mysten/walrus': 0.8.4(typescript@5.9.3)
+    transitivePeerDependencies:
+      - '@gql.tada/svelte-support'
+      - '@gql.tada/vue-support'
+      - typescript
+
+  '@mysten/seal@0.9.4(typescript@5.9.3)':
+    dependencies:
+      '@mysten/bcs': 1.9.2
+      '@mysten/sui': 1.45.0(typescript@5.9.3)
+      '@noble/curves': 1.9.4
+      '@noble/hashes': 1.8.0
+    transitivePeerDependencies:
+      - '@gql.tada/svelte-support'
+      - '@gql.tada/vue-support'
+      - typescript
+
   '@mysten/slush-wallet@0.2.10(typescript@5.9.3)':
     dependencies:
       '@mysten/sui': 1.45.0(typescript@5.9.3)
@@ -3225,6 +3269,20 @@ snapshots:
     dependencies:
       '@mysten/sui': 1.45.0(typescript@5.9.3)
       '@wallet-standard/core': 1.1.1
+    transitivePeerDependencies:
+      - '@gql.tada/svelte-support'
+      - '@gql.tada/vue-support'
+      - typescript
+
+  '@mysten/walrus-wasm@0.1.1': {}
+
+  '@mysten/walrus@0.8.4(typescript@5.9.3)':
+    dependencies:
+      '@mysten/bcs': 1.9.2
+      '@mysten/sui': 1.45.0(typescript@5.9.3)
+      '@mysten/utils': 0.2.0
+      '@mysten/walrus-wasm': 0.1.1
+      dataloader: 2.2.3
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -4231,7 +4289,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.4
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -4663,6 +4721,8 @@ snapshots:
   cssesc@3.0.0: {}
 
   csstype@3.2.0: {}
+
+  dataloader@2.2.3: {}
 
   date-fns@3.6.0: {}
 

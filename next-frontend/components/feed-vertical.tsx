@@ -89,7 +89,7 @@ export function FeedVertical() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background overflow-hidden">
+    <div className="h-full flex flex-col bg-background w-full overflow-hidden">
       {/* Vertical Snap Scroll Container */}
       <div
         className="flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth"
@@ -98,10 +98,10 @@ export function FeedVertical() {
         {videos.map((video, _index) => (
           <div
             key={video.id}
-            className="snap-center h-full w-full flex-shrink-0 flex items-center justify-center relative bg-black overflow-hidden"
+            className="snap-center h-full w-full shrink-0 flex items-center justify-center relative bg-black overflow-hidden"
           >
             {/* Video Container */}
-            <div className="relative w-full h-full max-w-md bg-muted flex items-center justify-center">
+            <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src={video.videoUrl || "/placeholder.svg"}
                 alt="Video content"

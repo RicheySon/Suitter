@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSui } from './sui-context'
 import { SuitCard } from './suit-card'
 import { FeedVertical } from './feed-vertical'
+import { ReplyModal } from './reply-modal'
 
 interface Suit {
   id: string
@@ -16,10 +17,15 @@ interface Suit {
   replies: number
   reposts: number
   liked: boolean
+  reposted?: boolean
   isNFT: boolean
   nftValue: number
   currentBid: number
   isEncrypted: boolean
+  media?: {
+    type: 'image' | 'video'
+    url: string
+  }
 }
 
 interface HomeFeedProps {
@@ -38,10 +44,15 @@ const SAMPLE_SUITS: Suit[] = [
     replies: 342,
     reposts: 856,
     liked: false,
+    reposted: false,
     isNFT: true,
     nftValue: 0.5,
     currentBid: 0.75,
     isEncrypted: true,
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80'
+    }
   },
   {
     id: '2',
@@ -54,10 +65,15 @@ const SAMPLE_SUITS: Suit[] = [
     replies: 156,
     reposts: 423,
     liked: false,
+    reposted: false,
     isNFT: true,
     nftValue: 0.3,
     currentBid: 0.4,
     isEncrypted: false,
+    media: {
+      type: 'video',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+    }
   },
   {
     id: '3',
@@ -70,6 +86,7 @@ const SAMPLE_SUITS: Suit[] = [
     replies: 678,
     reposts: 1245,
     liked: false,
+    reposted: false,
     isNFT: true,
     nftValue: 0.8,
     currentBid: 1.2,
@@ -77,18 +94,147 @@ const SAMPLE_SUITS: Suit[] = [
   },
 ]
 
+const FOLLOWING_SUITS: Suit[] = [
+  {
+    id: 'f1',
+    author: 'Sui Builder',
+    handle: 'suibuilder',
+    avatar: 'SB',
+    content: 'Just deployed my first dApp on Sui testnet! The developer experience is amazing. Gas fees are incredibly low compared to other chains.',
+    timestamp: Date.now() - 1 * 60 * 60 * 1000,
+    likes: 456,
+    replies: 89,
+    reposts: 123,
+    liked: false,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.4,
+    currentBid: 0.55,
+    isEncrypted: false,
+  },
+  {
+    id: 'f2',
+    author: 'NFT Collector',
+    handle: 'nftcollector',
+    avatar: 'NC',
+    content: 'My latest NFT collection on Sui is live! Each piece represents a unique moment in blockchain history. Check out the dynamic metadata updates.',
+    timestamp: Date.now() - 3 * 60 * 60 * 1000,
+    likes: 789,
+    replies: 234,
+    reposts: 456,
+    liked: true,
+    reposted: false,
+    isNFT: true,
+    nftValue: 1.2,
+    currentBid: 1.5,
+    isEncrypted: true,
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800&q=80'
+    }
+  },
+  {
+    id: 'f3',
+    author: 'DeFi Enthusiast',
+    handle: 'defilife',
+    avatar: 'DE',
+    content: 'Sui\'s parallel execution is a game changer for DeFi. No more waiting for transactions to process sequentially. The future is here!',
+    timestamp: Date.now() - 5 * 60 * 60 * 1000,
+    likes: 1024,
+    replies: 178,
+    reposts: 567,
+    liked: false,
+    reposted: true,
+    isNFT: true,
+    nftValue: 0.6,
+    currentBid: 0.8,
+    isEncrypted: false,
+  },
+  {
+    id: 'f4',
+    author: 'Move Developer',
+    handle: 'movedev',
+    avatar: 'MD',
+    content: 'Writing smart contracts in Move is such a pleasant experience. The safety guarantees and expressiveness make development faster and more secure.',
+    timestamp: Date.now() - 8 * 60 * 60 * 1000,
+    likes: 623,
+    replies: 145,
+    reposts: 289,
+    liked: true,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.35,
+    currentBid: 0.45,
+    isEncrypted: true,
+    media: {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80'
+    }
+  },
+]
+
 export function HomeFeed({ onCompose }: HomeFeedProps) {
   const { address } = useSui()
-  const [suits, setSuits] = useState<Suit[]>(SAMPLE_SUITS)
+  const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS)
+  const [followingSuits, setFollowingSuits] = useState<Suit[]>(FOLLOWING_SUITS)
   const [tab, setTab] = useState<'foryou' | 'following' | 'feed'>('foryou')
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
+  const [replyModalOpen, setReplyModalOpen] = useState(false)
+  const [replyToSuit, setReplyToSuit] = useState<Suit | null>(null)
+
+  // Get current suits based on active tab
+  const currentSuits = tab === 'following' ? followingSuits : forYouSuits
+  const setCurrentSuits = tab === 'following' ? setFollowingSuits : setForYouSuits
 
   const toggleLike = (id: string) => {
-    setSuits(suits.map(suit =>
+    setCurrentSuits(currentSuits.map(suit =>
       suit.id === id
         ? { ...suit, liked: !suit.liked, likes: suit.liked ? suit.likes - 1 : suit.likes + 1 }
         : suit
     ))
+  }
+
+  const toggleRepost = (id: string) => {
+    setCurrentSuits(currentSuits.map(suit =>
+      suit.id === id
+        ? { ...suit, reposted: !suit.reposted, reposts: suit.reposted ? suit.reposts - 1 : suit.reposts + 1 }
+        : suit
+    ))
+  }
+
+  const handleReply = (id: string) => {
+    const suit = currentSuits.find(s => s.id === id)
+    if (suit) {
+      setReplyToSuit(suit)
+      setReplyModalOpen(true)
+    }
+  }
+
+  const handleReplySubmit = (suitId: string, replyContent: string) => {
+    // TODO: Submit reply to blockchain
+    console.log('Reply submitted to suit:', suitId, replyContent)
+    // Increment the reply count
+    setCurrentSuits(currentSuits.map(suit =>
+      suit.id === suitId
+        ? { ...suit, replies: suit.replies + 1 }
+        : suit
+    ))
+  }
+
+  const handleShare = (id: string) => {
+    const suit = currentSuits.find(s => s.id === id)
+    if (suit && navigator.share) {
+      navigator.share({
+        title: `${suit.author} on Suiter`,
+        text: suit.content,
+        url: window.location.href,
+      }).catch(err => console.log('Error sharing:', err))
+    } else {
+      // Fallback: copy link to clipboard
+      navigator.clipboard.writeText(window.location.href)
+      console.log('Link copied to clipboard')
+      // TODO: Show toast notification
+    }
   }
 
   const toggleBookmark = (id: string, isBookmarked: boolean) => {
@@ -120,8 +266,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           </button>
           <button
             onClick={() => setTab('following')}
-            disabled={!address}
-            className={`flex-1 px-4 py-4 font-semibold text-sm transition-colors relative hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`flex-1 px-4 py-4 font-semibold text-sm transition-colors relative hover:bg-muted/50 ${
               tab === 'following' 
                 ? 'text-foreground' 
                 : 'text-muted-foreground'
@@ -173,11 +318,15 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           <FeedVertical />
         ) : (
           <>
-            {suits.map((suit) => (
+            {currentSuits.map((suit) => (
               <SuitCard
                 key={suit.id}
                 {...suit}
+                media={suit.media}
                 onLike={toggleLike}
+                onRepost={toggleRepost}
+                onReply={handleReply}
+                onShare={handleShare}
                 onBookmark={toggleBookmark}
                 bookmarked={bookmarks.has(suit.id)}
               />
@@ -185,6 +334,24 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           </>
         )}
       </div>
+
+      {replyToSuit && (
+        <ReplyModal
+          isOpen={replyModalOpen}
+          onClose={() => {
+            setReplyModalOpen(false)
+            setReplyToSuit(null)
+          }}
+          originalSuit={{
+            id: replyToSuit.id,
+            author: replyToSuit.author,
+            handle: replyToSuit.handle,
+            avatar: replyToSuit.avatar,
+            content: replyToSuit.content,
+          }}
+          onReplySubmit={handleReplySubmit}
+        />
+      )}
     </div>
   )
 }

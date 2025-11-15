@@ -22,11 +22,19 @@ interface SuitCardProps {
   replies: number;
   reposts: number;
   liked: boolean;
+  reposted?: boolean;
   isNFT?: boolean;
   nftValue?: number;
   currentBid?: number;
   isEncrypted?: boolean;
+  media?: {
+    type: 'image' | 'video';
+    url: string;
+  };
   onLike: (id: string) => void;
+  onRepost?: (id: string) => void;
+  onReply?: (id: string) => void;
+  onShare?: (id: string) => void;
   onBookmark: (id: string, isBookmarked: boolean) => void;
   bookmarked?: boolean;
 }
@@ -42,11 +50,16 @@ export function SuitCard({
   replies,
   reposts,
   liked,
+  reposted = false,
   isNFT = true,
   nftValue = 0.5,
   currentBid = 0.75,
   isEncrypted = false,
+  media,
   onLike,
+  onRepost,
+  onReply,
+  onShare,
   onBookmark,
   bookmarked = false,
 }: SuitCardProps) {
@@ -95,7 +108,7 @@ export function SuitCard({
             <div className="flex items-center justify-between">
               {/* Avatar */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0">
                   {avatar}
                 </div>
                 <div className="flex text-sm flex-wrap gap-10 items-start">
@@ -178,18 +191,47 @@ export function SuitCard({
           </div>
 
           {/* Content */}
-          <p className="mt-2 text-base text-foreground break-words">
+          <p className="mt-2 text-base text-foreground wrap-break-word">
             {content}
           </p>
 
+          {/* Media */}
+          {media && (
+            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+              {media.type === 'image' ? (
+                <img
+                  src={media.url}
+                  alt="Post media"
+                  className="w-full max-h-[500px] object-cover"
+                />
+              ) : (
+                <video
+                  src={media.url}
+                  controls
+                  className="w-full max-h-[500px] object-contain bg-black"
+                />
+              )}
+            </div>
+          )}
+
           {/* Action Buttons with Icons and Counts */}
           <div className="mt-3 flex justify-between text-muted-foreground max-w-md">
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
+            <button 
+              onClick={() => onReply?.(id)}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
               <MessageCircle size={16} />
               <span className="text-xs">{replies}</span>
             </button>
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
-              <Repeat2 size={16} />
+            <button 
+              onClick={() => onRepost?.(id)}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
+              <Repeat2 
+                size={16} 
+                color={reposted ? "#000" : "currentColor"}
+                className={reposted ? "text-green-600 dark:text-green-400" : ""}
+              />
               <span className="text-xs">{reposts}</span>
             </button>
             <button
@@ -214,7 +256,10 @@ export function SuitCard({
               />
               <span className="text-xs">{bookmarked ? "1" : "0"}</span>
             </button>
-            <button className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn">
+            <button 
+              onClick={() => onShare?.(id)}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+            >
               <Share size={16} />
             </button>
           </div>

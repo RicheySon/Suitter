@@ -1,4 +1,12 @@
-import { ChevronRight, Moon, Sun, Lock, Trash2, LogOut } from "lucide-react";
+import {
+  ChevronRight,
+  Moon,
+  Sun,
+  Lock,
+  Trash2,
+  LogOut,
+  Wallet,
+} from "lucide-react";
 import { MinimalHeader } from "../../components/minimal-header";
 import { AppSidebar } from "../../components/app-sidebar";
 import { SuiProvider } from "../../components/sui-context";
@@ -7,6 +15,7 @@ import { TrendingSidebar } from "../../components/trending-sidebar";
 import { useSui } from "../../components/sui-context";
 import { useTheme } from "../../components/theme-provider";
 import { useEffect, useState } from "react";
+import { useCurrentAccount, useDisconnectWallet } from "@mysten/dapp-kit";
 import { useProfile } from "../../hooks/useProfile";
 
 interface SettingItem {
@@ -18,11 +27,6 @@ interface SettingItem {
 }
 
 function SettingsContent() {
-  const { disconnect, address } = useSui();
-  const { theme, toggleTheme } = useTheme();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const {
     fetchMyProfile,
     createProfile,
@@ -44,9 +48,25 @@ function SettingsContent() {
       }
     })();
   }, [fetchMyProfile]);
+  const currentAccount = useCurrentAccount();
+  const { mutate: disconnect } = useDisconnectWallet();
+  const address = currentAccount?.address;
+  const { theme, toggleTheme } = useTheme();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showChangeWallet, setShowChangeWallet] = useState(false);
 
   const handleLogout = () => {
     disconnect();
+  };
+
+  const handleChangeWallet = () => {
+    // Disconnect current wallet first
+    disconnect();
+    // Close the modal
+    setShowChangeWallet(false);
+    // The ConnectButton in the header will allow user to connect a different wallet
   };
 
   const handleDeleteAccount = () => {
@@ -75,7 +95,8 @@ function SettingsContent() {
       id: "change-wallet",
       label: "Change Wallet",
       description: "Switch to a different Sui wallet address",
-      icon: <Lock size={20} />,
+      icon: <Wallet size={20} />,
+      action: () => setShowChangeWallet(true),
     },
     {
       id: "download-data",
@@ -307,7 +328,7 @@ function SettingsContent() {
                     <div className="text-left">
                       <div className="font-semibold">Disconnect Wallet</div>
                       <div className="text-sm text-muted-foreground">
-                        Sign out from Suiter
+                        Sign out from Suitter
                       </div>
                     </div>
                   </div>
@@ -344,6 +365,55 @@ function SettingsContent() {
                 </div>
               </div>
             )}
+
+            {/* Change Wallet Modal */}
+            {showChangeWallet && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+                <div className="card-base w-full max-w-md p-6">
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    Change Wallet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    To change your wallet, you'll need to disconnect your
+                    current wallet first, then connect a different one.
+                  </p>
+
+                  {address && (
+                    <div className="mb-6 p-3 rounded-lg bg-muted border border-border">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Current Wallet
+                      </div>
+                      <div className="font-mono text-sm text-foreground break-all">
+                        {address}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleChangeWallet}
+                      className="w-full btn-base py-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold"
+                    >
+                      Disconnect & Change Wallet
+                    </button>
+                    <button
+                      onClick={() => setShowChangeWallet(false)}
+                      className="w-full btn-base py-3 bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-xs text-muted-foreground">
+                      💡 <strong>Tip:</strong> After disconnecting, use the
+                      "Connect Wallet" button in the header to connect a
+                      different wallet.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
 
@@ -359,9 +429,5 @@ function SettingsContent() {
 }
 
 export default function SettingsPage() {
-  return (
-    <SuiProvider>
-      <SettingsContent />
-    </SuiProvider>
-  );
+  return <SettingsContent />;
 }
