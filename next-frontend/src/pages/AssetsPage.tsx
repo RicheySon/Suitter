@@ -5,9 +5,20 @@ import { AppSidebar } from '../../components/app-sidebar'
 import { ComposeModal } from '../../components/compose-modal'
 import { TrendingSidebar } from '../../components/trending-sidebar'
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit'
-import CONFIG from '../../config'
+// import CONFIG from '../../config'
 
-const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID
+// const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID
+
+interface Bid {
+  id: string
+  suitName: string
+  image: string
+  currentBid: number
+  myBid: number
+  highestBidder: string
+  endsIn: string
+  status: 'winning' | 'outbid'
+}
 
 function AssetsContent() {
   const currentAccount = useCurrentAccount()
@@ -61,7 +72,6 @@ function AssetsContent() {
         },
       })
 
-      const suitType = `${PACKAGE_ID}::suits::Suit`
       const userSuits: any[] = []
       const userNfts: any[] = []
 
@@ -121,7 +131,7 @@ function AssetsContent() {
     change24h: 5.67, // You can fetch this from a price API
   }
 
-  const bids = [
+  const bids: Bid[] = [
     // Bids will be empty for now - can be implemented later
   ]
 

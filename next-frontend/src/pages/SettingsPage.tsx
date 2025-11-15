@@ -9,10 +9,8 @@ import {
 } from "lucide-react";
 import { MinimalHeader } from "../../components/minimal-header";
 import { AppSidebar } from "../../components/app-sidebar";
-import { SuiProvider } from "../../components/sui-context";
 import { ComposeModal } from "../../components/compose-modal";
 import { TrendingSidebar } from "../../components/trending-sidebar";
-import { useSui } from "../../components/sui-context";
 import { useTheme } from "../../components/theme-provider";
 import { useEffect, useState } from "react";
 import { useCurrentAccount, useDisconnectWallet } from "@mysten/dapp-kit";

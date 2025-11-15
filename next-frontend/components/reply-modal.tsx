@@ -111,10 +111,9 @@ export function ReplyModal({ isOpen, onClose, originalSuit, onReplySubmit }: Rep
     try {
       // TODO: Implement actual reply submission to blockchain
       // Upload files to IPFS or decentralized storage first
-      let fileUrls: string[] = []
       if (selectedFiles.length > 0) {
         console.log('Uploading files:', selectedFiles)
-        fileUrls = selectedFiles.map(file => URL.createObjectURL(file))
+        // fileUrls would be used here when implementing actual file upload
       }
 
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call

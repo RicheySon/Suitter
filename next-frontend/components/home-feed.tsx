@@ -185,14 +185,11 @@ const FOLLOWING_SUITS: Suit[] = [
 export function HomeFeed({ onCompose }: HomeFeedProps) {
   const account = useCurrentAccount();
   const address = account?.address ?? null;
-  const { fetchSuits, isFetching } = useSuits();
+  const { fetchSuits } = useSuits();
   const {
     likeSuit,
     retweetSuit,
     commentOnSuit,
-    isLiking,
-    isRetweeting,
-    isCommenting,
   } = useInteractions();
   const { fetchProfileByAddress } = useProfile();
   const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS);
