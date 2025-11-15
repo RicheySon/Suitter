@@ -3,6 +3,7 @@ import { X, Image, Smile, Loader2, Video, XCircle } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuits } from "../hooks/useSuits";
 import { useWalrusUpload } from "../hooks/useWalrusUpload";
+import { useProfile } from "../hooks/useProfile";
 import { motion, AnimatePresence } from "framer-motion";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 
@@ -26,6 +27,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
   const address = currentAccount?.address;
   const { postSuit, isPosting: _isPostingOnChain } = useSuits();
   const { uploadImage, isUploading } = useWalrusUpload();
+  const { fetchMyProfileFields } = useProfile();
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +35,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
   const [cursorPosition, setCursorPosition] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +66,16 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previewUrls]);
+
+  // Fetch user profile when modal opens
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!address || !isOpen) return;
+      const profile = await fetchMyProfileFields();
+      setUserProfile(profile);
+    };
+    loadUserProfile();
+  }, [address, isOpen, fetchMyProfileFields]);
 
   const handleFileSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -227,8 +240,20 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
           {/* Content */}
           <div className="p-4">
             <div className="flex gap-3">
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                {address ? address.slice(0, 2).toUpperCase() : "?"}
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+                {userProfile?.pfpUrl ? (
+                  <img
+                    src={userProfile.pfpUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>
+                    {userProfile?.username?.slice(0, 2).toUpperCase() ||
+                     address?.slice(0, 2).toUpperCase() ||
+                     "?"}
+                  </span>
+                )}
               </div>
               <div className="flex-1">
                 <textarea

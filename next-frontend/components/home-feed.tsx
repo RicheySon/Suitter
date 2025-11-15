@@ -193,7 +193,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     retweetSuit,
     commentOnSuit,
   } = useInteractions();
-  const { fetchProfileByAddress } = useProfile();
+  const { fetchProfileByAddress, fetchMyProfileFields } = useProfile();
   const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS);
   const [followingSuits, setFollowingSuits] = useState<Suit[]>(FOLLOWING_SUITS);
   const [onChainSuits, setOnChainSuits] = useState<Suit[]>([]);
@@ -203,6 +203,17 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
   const [replyToSuit, setReplyToSuit] = useState<Suit | null>(null);
   const [commentsViewOpen, setCommentsViewOpen] = useState(false);
   const [commentsForSuit, setCommentsForSuit] = useState<Suit | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!address) return;
+      const profile = await fetchMyProfileFields();
+      setUserProfile(profile);
+    };
+    loadUserProfile();
+  }, [address, fetchMyProfileFields]);
 
   // Fetch on-chain suits on mount
   useEffect(() => {
@@ -504,19 +515,30 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       {/* Compose Section */}
       {address && tab !== "feed" && (
         <div className="border-b border-border p-4">
-          <div className="flex gap-4">
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0">
-              {address.slice(-4).toUpperCase()}
+          <button
+            onClick={onCompose}
+            className="w-full flex gap-4 hover:bg-muted/30 transition-colors rounded-lg p-2 -m-2 cursor-pointer group"
+          >
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0 overflow-hidden">
+              {userProfile?.pfpUrl ? (
+                <img
+                  src={userProfile.pfpUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>
+                  {userProfile?.username?.slice(0, 2).toUpperCase() ||
+                   address.slice(-2).toUpperCase()}
+                </span>
+              )}
             </div>
-            <div className="flex-1">
-              <button
-                onClick={onCompose}
-                className="w-full text-left text-lg text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted/30"
-              >
+            <div className="flex-1 text-left">
+              <div className="text-lg text-muted-foreground group-hover:text-foreground transition-colors">
                 What's happening!?
-              </button>
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       )}
 
