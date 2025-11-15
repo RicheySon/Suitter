@@ -10,14 +10,14 @@ import { MessagingClientProvider } from "../../providers/MessagingClientProvider
 const queryClient = new QueryClient();
 
 const { networkConfig } = createNetworkConfig({
-  // testnet: { url: "https://fullnode.testnet.sui.io:443" },
+  testnet: { url: "https://fullnode.testnet.sui.io:443" },
   devnet: { url: "https://fullnode.devnet.sui.io:443" },
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="devnet">
+      <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
         <WalletProvider
           autoConnect={true}
           slushWallet={{
