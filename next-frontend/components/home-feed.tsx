@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSui } from "./sui-context";
 import { useSuits } from "../hooks/useSuits";
 import { useInteractions } from "../hooks/useInteractions";
+import { useProfile } from "../hooks/useProfile";
 import { SuitCard } from "./suit-card";
 import { FeedVertical } from "./feed-vertical";
 import { ReplyModal } from "./reply-modal";
@@ -192,6 +193,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     isRetweeting,
     isCommenting,
   } = useInteractions();
+  const { fetchProfileByAddress } = useProfile();
   const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS);
   const [followingSuits, setFollowingSuits] = useState<Suit[]>(FOLLOWING_SUITS);
   const [onChainSuits, setOnChainSuits] = useState<Suit[]>([]);
@@ -206,37 +208,50 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       const suits = await fetchSuits(20, 0);
 
       // Transform on-chain suits to component format
-      const transformed = suits
-        .map((suit: any) => {
-          const fields = suit?.content?.fields;
-          if (!fields) return null;
+      const transformedPromises = suits.map(async (suit: any) => {
+        const fields = suit?.content?.fields;
+        if (!fields) return null;
 
-          return {
-            id: suit.objectId,
-            author: truncateAddress(fields.creator || "Unknown"),
-            handle: truncateAddress(fields.creator || "unknown", 4, 4),
-            avatar: fields.creator?.slice(-2).toUpperCase() || "??",
-            content: fields.content || "",
-            timestamp: parseInt(fields.created_at) || Date.now(),
-            likes: parseInt(fields.like_count) || 0,
-            replies: parseInt(fields.comment_count) || 0,
-            reposts: parseInt(fields.retweet_count) || 0,
-            liked: false,
-            reposted: false,
-            isNFT: true,
-            nftValue: 0,
-            currentBid: 0,
-            isEncrypted: false,
-            media:
-              fields.media_urls?.length > 0
-                ? {
-                    type: "image" as const,
-                    url: fields.media_urls[0],
-                  }
-                : undefined,
-          };
-        })
-        .filter(Boolean) as Suit[];
+        const creatorAddress = fields.creator || "";
+        let displayName = truncateAddress(creatorAddress || "Unknown");
+        let handleName = truncateAddress(creatorAddress || "unknown", 4, 4);
+
+        // Fetch profile for the creator
+        if (creatorAddress) {
+          const profile = await fetchProfileByAddress(creatorAddress);
+          if (profile && profile.username) {
+            displayName = profile.username;
+            handleName = profile.username;
+          }
+        }
+
+        return {
+          id: suit.objectId,
+          author: displayName,
+          handle: handleName,
+          avatar: creatorAddress?.slice(-2).toUpperCase() || "??",
+          content: fields.content || "",
+          timestamp: parseInt(fields.created_at) || Date.now(),
+          likes: parseInt(fields.like_count) || 0,
+          replies: parseInt(fields.comment_count) || 0,
+          reposts: parseInt(fields.retweet_count) || 0,
+          liked: false,
+          reposted: false,
+          isNFT: true,
+          nftValue: 0,
+          currentBid: 0,
+          isEncrypted: false,
+          media:
+            fields.media_urls?.length > 0
+              ? {
+                  type: "image" as const,
+                  url: fields.media_urls[0],
+                }
+              : undefined,
+        };
+      });
+
+      const transformed = (await Promise.all(transformedPromises)).filter(Boolean) as Suit[];
 
       setOnChainSuits(transformed);
     };
@@ -249,7 +264,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     return () => clearInterval(intervalId);
 
     // loadSuits();
-  }, [fetchSuits]);
+  }, [fetchSuits, fetchProfileByAddress]);
 
   // Get current suits based on active tab
   const currentSuits =

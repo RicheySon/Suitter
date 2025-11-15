@@ -61,6 +61,39 @@ export function useProfile() {
     return { profileId: objectId as string, username, bio, pfpUrl };
   }, [fetchMyProfile]);
 
+  const fetchProfileByAddress = useCallback(async (userAddress: string) => {
+    if (!userAddress) return null;
+    try {
+      const res = await suiClient.getOwnedObjects({
+        owner: userAddress,
+        filter: { StructType: PROFILE_TYPE },
+        options: { showType: true, showContent: true, showDisplay: true },
+      });
+      const obj = res.data?.[0];
+      if (!obj) return null;
+      
+      const content = obj?.data?.content ?? obj?.content;
+      const fields = content?.fields ?? content;
+      
+      if (fields) {
+        const readStr = (v: any) => {
+          if (typeof v === "string") return v;
+          if (v && typeof v === "object" && typeof v.bytes === "string")
+            return v.bytes;
+          return "";
+        };
+        const username = fields.username ? readStr(fields.username) : "";
+        const bio = fields.bio ? readStr(fields.bio) : "";
+        const pfpUrl = fields.pfp_url ? readStr(fields.pfp_url) : "";
+        return { username, bio, pfpUrl };
+      }
+      return null;
+    } catch (e) {
+      console.error("fetchProfileByAddress failed", e);
+      return null;
+    }
+  }, [suiClient]);
+
   const createProfile = useCallback(
     async (username: string, bio: string, pfpUrl: string) => {
       if (!address) throw new Error("Wallet not connected");
@@ -147,6 +180,7 @@ export function useProfile() {
       error,
       fetchMyProfile,
       fetchMyProfileFields,
+      fetchProfileByAddress,
       createProfile,
       updateProfile,
     }),
@@ -156,6 +190,7 @@ export function useProfile() {
       error,
       fetchMyProfile,
       fetchMyProfileFields,
+      fetchProfileByAddress,
       createProfile,
       updateProfile,
     ]
