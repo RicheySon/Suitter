@@ -116,7 +116,6 @@ module suits::suits {
 
     // ===== Counter Update Functions =====
 
-  
     public fun increment_like_count(suit: &mut Suit) {
         suit.like_count = suit.like_count + 1;
     }
@@ -165,19 +164,15 @@ module suits::suits {
             return result
         };
         
-        // Calculate the starting index (from the end, since we want newest first)
-        // suit_ids is in chronological order, so we reverse iterate
         let mut start_idx = total_suits - offset - 1;
         let mut count = 0;
         
-        // Iterate backwards to get newest Suits first
         while (count < limit && start_idx >= 0) {
             let suit_id = *vector::borrow(&registry.suit_ids, start_idx);
             vector::push_back(&mut result, suit_id);
             
             count = count + 1;
             
-            // Check for underflow before decrementing
             if (start_idx == 0) {
                 break
             };
@@ -187,17 +182,7 @@ module suits::suits {
         result
     }
 
-    /// Retrieve all Suits created by a specific user.
-    /// 
-    /// Returns a vector of Suit IDs for all Suits created by the given address.
-    /// Useful for displaying a user's profile page with their posts.
-    /// 
-    /// # Arguments
-    /// * `registry` - Reference to the SuitRegistry
-    /// * `creator_address` - Address of the creator to filter by
-    /// 
-    /// # Returns
-    /// * `vector<ID>` - Vector of Suit IDs created by the user
+
     public fun get_suits_by_creator(
         registry: &SuitRegistry,
         creator_address: address
@@ -206,12 +191,10 @@ module suits::suits {
         let mut i = 0;
         let total_suits = vector::length(&registry.suit_ids);
         
-        // Iterate through all Suits and filter by creator
         while (i < total_suits) {
             let suit_id = *vector::borrow(&registry.suit_ids, i);
             let creator = table::borrow(&registry.suits, suit_id);
             
-            // Add to result if creator matches
             if (*creator == creator_address) {
                 vector::push_back(&mut result, suit_id);
             };
