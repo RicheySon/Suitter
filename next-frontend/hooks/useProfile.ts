@@ -75,7 +75,7 @@ export function useProfile() {
       try {
         const tx = new Transaction();
         // create_profile returns a Profile object that needs to be transferred
-        const profile = tx.moveCall({
+        const [profile] = tx.moveCall({
           target: `${PACKAGE_ID}::profile::create_profile`,
           arguments: [
             tx.object(USERNAME_REGISTRY_ID), // &mut UsernameRegistry
@@ -85,7 +85,7 @@ export function useProfile() {
           ],
         });
         // Transfer the profile to the sender
-        tx.transferObjects([profile], address);
+        tx.transferObjects([profile], tx.pure.address(address));
         const { digest } = await signAndExecute({ transaction: tx });
         await suiClient.waitForTransaction({ digest });
         return digest;

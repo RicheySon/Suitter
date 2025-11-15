@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSui } from "./sui-context";
 import { useSuits } from "../hooks/useSuits";
+import { useInteractions } from "../hooks/useInteractions";
 import { SuitCard } from "./suit-card";
 import { FeedVertical } from "./feed-vertical";
 import { ReplyModal } from "./reply-modal";
@@ -182,6 +183,14 @@ const FOLLOWING_SUITS: Suit[] = [
 export function HomeFeed({ onCompose }: HomeFeedProps) {
   const { address } = useSui();
   const { fetchSuits, isFetching } = useSuits();
+  const {
+    likeSuit,
+    retweetSuit,
+    commentOnSuit,
+    isLiking,
+    isRetweeting,
+    isCommenting,
+  } = useInteractions();
   const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS);
   const [followingSuits, setFollowingSuits] = useState<Suit[]>(FOLLOWING_SUITS);
   const [onChainSuits, setOnChainSuits] = useState<Suit[]>([]);
@@ -241,35 +250,109 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       : tab === "foryou"
       ? [...onChainSuits, ...forYouSuits]
       : forYouSuits;
-  const setCurrentSuits =
-    tab === "following" ? setFollowingSuits : setForYouSuits;
 
-  const toggleLike = (id: string) => {
-    setCurrentSuits(
-      currentSuits.map((suit) =>
-        suit.id === id
+  const toggleLike = async (id: string) => {
+    if (!address) {
+      console.log("Please connect wallet to like");
+      return;
+    }
+
+    const suit = currentSuits.find((s) => s.id === id);
+    if (!suit) return;
+    const isOnChain = id.startsWith("0x");
+
+    // Optimistically update UI - update both arrays
+    const updateSuit = (suits: Suit[]) =>
+      suits.map((s) =>
+        s.id === id
           ? {
-              ...suit,
-              liked: !suit.liked,
-              likes: suit.liked ? suit.likes - 1 : suit.likes + 1,
+              ...s,
+              liked: !s.liked,
+              likes: s.liked ? s.likes - 1 : s.likes + 1,
             }
-          : suit
-      )
-    );
+          : s
+      );
+
+    setOnChainSuits(updateSuit(onChainSuits));
+    setForYouSuits(updateSuit(forYouSuits));
+    setFollowingSuits(updateSuit(followingSuits));
+
+    // Only call blockchain for on-chain suits
+    if (isOnChain) {
+      try {
+        await likeSuit(id);
+        console.log("Suit liked successfully!");
+      } catch (error: any) {
+        console.error("Failed to like suit:", error);
+        // Revert optimistic update on error
+        const revertSuit = (suits: Suit[]) =>
+          suits.map((s) =>
+            s.id === id
+              ? {
+                  ...s,
+                  liked: suit.liked,
+                  likes: suit.likes,
+                }
+              : s
+          );
+
+        setOnChainSuits(revertSuit(onChainSuits));
+        setForYouSuits(revertSuit(forYouSuits));
+        setFollowingSuits(revertSuit(followingSuits));
+      }
+    }
   };
 
-  const toggleRepost = (id: string) => {
-    setCurrentSuits(
-      currentSuits.map((suit) =>
-        suit.id === id
+  const toggleRepost = async (id: string) => {
+    if (!address) {
+      console.log("Please connect wallet to retweet");
+      return;
+    }
+
+    const suit = currentSuits.find((s) => s.id === id);
+    if (!suit) return;
+    const isOnChain = id.startsWith("0x");
+
+    // Optimistically update UI - update both arrays
+    const updateSuit = (suits: Suit[]) =>
+      suits.map((s) =>
+        s.id === id
           ? {
-              ...suit,
-              reposted: !suit.reposted,
-              reposts: suit.reposted ? suit.reposts - 1 : suit.reposts + 1,
+              ...s,
+              reposted: !s.reposted,
+              reposts: s.reposted ? s.reposts - 1 : s.reposts + 1,
             }
-          : suit
-      )
-    );
+          : s
+      );
+
+    setOnChainSuits(updateSuit(onChainSuits));
+    setForYouSuits(updateSuit(forYouSuits));
+    setFollowingSuits(updateSuit(followingSuits));
+
+    // Only call blockchain for on-chain suits
+    if (isOnChain) {
+      try {
+        await retweetSuit(id);
+        console.log("Suit retweeted successfully!");
+      } catch (error: any) {
+        console.error("Failed to retweet suit:", error);
+        // Revert optimistic update on error
+        const revertSuit = (suits: Suit[]) =>
+          suits.map((s) =>
+            s.id === id
+              ? {
+                  ...s,
+                  reposted: suit.reposted,
+                  reposts: suit.reposts,
+                }
+              : s
+          );
+
+        setOnChainSuits(revertSuit(onChainSuits));
+        setForYouSuits(revertSuit(forYouSuits));
+        setFollowingSuits(revertSuit(followingSuits));
+      }
+    }
   };
 
   const handleReply = (id: string) => {
@@ -280,15 +363,32 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     }
   };
 
-  const handleReplySubmit = (suitId: string, replyContent: string) => {
-    // TODO: Submit reply to blockchain
-    console.log("Reply submitted to suit:", suitId, replyContent);
-    // Increment the reply count
-    setCurrentSuits(
-      currentSuits.map((suit) =>
-        suit.id === suitId ? { ...suit, replies: suit.replies + 1 } : suit
-      )
-    );
+  const handleReplySubmit = async (suitId: string, replyContent: string) => {
+    if (!address) {
+      console.log("Please connect wallet to comment");
+      return;
+    }
+
+    try {
+      const isOnChain = suitId.startsWith("0x");
+      // Submit comment to blockchain only for on-chain suits
+      if (isOnChain) {
+        await commentOnSuit(suitId, replyContent);
+        console.log("Comment submitted successfully!");
+      }
+
+      // Increment the reply count - update both arrays
+      const updateReplies = (suits: Suit[]) =>
+        suits.map((suit) =>
+          suit.id === suitId ? { ...suit, replies: suit.replies + 1 } : suit
+        );
+
+      setOnChainSuits(updateReplies(onChainSuits));
+      setForYouSuits(updateReplies(forYouSuits));
+      setFollowingSuits(updateReplies(followingSuits));
+    } catch (error: any) {
+      console.error("Failed to comment on suit:", error);
+    }
   };
 
   const handleShare = (id: string) => {

@@ -7,7 +7,10 @@ import { TrendingSidebar } from "../../components/trending-sidebar";
 import { useSui } from "../../components/sui-context";
 import { useEffect, useState } from "react";
 import { useProfile } from "../../hooks/useProfile";
+import { useSuits } from "../../hooks/useSuits";
+import { useInteractions } from "../../hooks/useInteractions";
 import { CreateProfileModal } from "../../components/create-profile-modal";
+import { SuitCard } from "../../components/suit-card";
 
 function ProfileContent() {
   const { address } = useSui();
@@ -18,11 +21,15 @@ function ProfileContent() {
   >("suits");
   const [isFollowing, setIsFollowing] = useState(false);
   const { fetchMyProfileFields } = useProfile();
+  const { fetchSuits } = useSuits();
+  const { likeSuit, retweetSuit, commentOnSuit } = useInteractions();
   const [onChainName, setOnChainName] = useState<string>("");
   const [onChainBio, setOnChainBio] = useState<string>("");
   const [onChainPfp, setOnChainPfp] = useState<string>("");
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [userSuits, setUserSuits] = useState<any[]>([]);
+  const [isLoadingSuits, setIsLoadingSuits] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -38,9 +45,139 @@ function ProfileContent() {
     })();
   }, [fetchMyProfileFields]);
 
+  // Fetch user's suits
+  useEffect(() => {
+    const loadSuits = async () => {
+      if (!address) return;
+
+      setIsLoadingSuits(true);
+      try {
+        const allSuits = await fetchSuits(100, 0);
+        const filtered = allSuits.filter((suit: any) => {
+          const fields = suit?.content?.fields;
+          const creator = fields?.creator;
+          return creator === address;
+        });
+
+        const transformed = filtered.map((suit: any) => {
+          const fields = suit?.content?.fields;
+          return {
+            id: suit.objectId,
+            author: onChainName || address.slice(0, 8),
+            handle: onChainName || address.slice(0, 8),
+            avatar:
+              onChainPfp ||
+              onChainName?.slice(0, 2).toUpperCase() ||
+              address.slice(-2).toUpperCase(),
+            content: fields?.content || "",
+            timestamp: parseInt(fields?.created_at) || Date.now(),
+            likes: parseInt(fields?.like_count) || 0,
+            replies: parseInt(fields?.comment_count) || 0,
+            reposts: parseInt(fields?.retweet_count) || 0,
+            liked: false,
+            reposted: false,
+            isNFT: true,
+            nftValue: 0,
+            currentBid: 0,
+            isEncrypted: false,
+            media:
+              fields?.media_urls?.length > 0
+                ? { type: "image" as const, url: fields.media_urls[0] }
+                : undefined,
+          };
+        });
+
+        setUserSuits(transformed);
+      } catch (error) {
+        console.error("Failed to load suits:", error);
+      } finally {
+        setIsLoadingSuits(false);
+      }
+    };
+
+    if (address && (onChainName || hasProfile !== null)) {
+      loadSuits();
+    }
+  }, [address, fetchSuits, onChainName, onChainPfp, hasProfile]);
+
+  const handleLike = async (id: string) => {
+    if (!address) return;
+
+    const suit = userSuits.find((s) => s.id === id);
+    if (!suit) return;
+
+    setUserSuits(
+      userSuits.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              liked: !s.liked,
+              likes: s.liked ? s.likes - 1 : s.likes + 1,
+            }
+          : s
+      )
+    );
+
+    try {
+      await likeSuit(id);
+    } catch (error) {
+      console.error("Failed to like suit:", error);
+      setUserSuits(
+        userSuits.map((s) =>
+          s.id === id ? { ...s, liked: suit.liked, likes: suit.likes } : s
+        )
+      );
+    }
+  };
+
+  const handleRepost = async (id: string) => {
+    if (!address) return;
+
+    const suit = userSuits.find((s) => s.id === id);
+    if (!suit) return;
+
+    setUserSuits(
+      userSuits.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              reposted: !s.reposted,
+              reposts: s.reposted ? s.reposts - 1 : s.reposts + 1,
+            }
+          : s
+      )
+    );
+
+    try {
+      await retweetSuit(id);
+    } catch (error) {
+      console.error("Failed to retweet suit:", error);
+      setUserSuits(
+        userSuits.map((s) =>
+          s.id === id
+            ? { ...s, reposted: suit.reposted, reposts: suit.reposts }
+            : s
+        )
+      );
+    }
+  };
+
+  const handleReply = async (id: string) => {
+    // Will be implemented with reply modal
+    console.log("Reply to suit:", id);
+  };
+
+  const handleShare = (id: string) => {
+    console.log("Share suit:", id);
+  };
+
+  const handleBookmark = (id: string, bookmarked: boolean) => {
+    console.log("Bookmark suit:", id, bookmarked);
+  };
+
   const userProfile = {
-    name: onChainName || "Gabby",
-    handle: "gabby",
+    name: onChainName || address?.slice(0, 8) || "Anonymous",
+    handle: onChainName || address?.slice(0, 8) || "anonymous",
     bio:
       onChainBio ||
       "Building decentralized social platforms on Sui | Web3 Enthusiast | Creating the future of social media 🚀",
@@ -241,194 +378,28 @@ function ProfileContent() {
             <div className="flex-1">
               {activeTab === "suits" && (
                 <div className="divide-y divide-border">
-                  {/* Sample Posts */}
-                  <article className="p-4 hover:bg-muted/30 transition-colors cursor-pointer">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-full shrink-0 flex items-center justify-center font-bold">
-                        {userProfile.handle.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 text-sm mb-1">
-                          <span className="font-bold text-foreground hover:underline">
-                            {userProfile.name}
-                          </span>
-                          <svg
-                            className="w-4 h-4 text-blue-500 fill-current"
-                            viewBox="0 0 22 22"
-                          >
-                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
-                          </svg>
-                          <span className="text-muted-foreground">
-                            @{userProfile.handle} · 2h
-                          </span>
-                        </div>
-                        <p className="text-foreground mb-3">
-                          Just deployed my first dApp on Sui! The speed and
-                          developer experience are incredible. Building on
-                          blockchain has never been this smooth 🚀
-                        </p>
-                        <div className="flex gap-12 text-muted-foreground text-sm">
-                          <button className="flex items-center gap-2 hover:text-blue-500 transition-colors group">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                              />
-                            </svg>
-                            <span>24</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-green-500 transition-colors group">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            <span>12</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-red-500 transition-colors group">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                              />
-                            </svg>
-                            <span>156</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-blue-500 transition-colors group">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                  {isLoadingSuits ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>Loading suits...</p>
                     </div>
-                  </article>
-
-                  <article className="p-4 hover:bg-muted/30 transition-colors cursor-pointer">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-full shrink-0 flex items-center justify-center font-bold">
-                        {userProfile.handle.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 text-sm mb-1">
-                          <span className="font-bold text-foreground hover:underline">
-                            {userProfile.name}
-                          </span>
-                          <svg
-                            className="w-4 h-4 text-blue-500 fill-current"
-                            viewBox="0 0 22 22"
-                          >
-                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
-                          </svg>
-                          <span className="text-muted-foreground">
-                            @{userProfile.handle} · 5h
-                          </span>
-                        </div>
-                        <p className="text-foreground mb-3">
-                          The future of social media is decentralized. No single
-                          entity should control our digital lives. That's why
-                          we're building Suiter on Sui blockchain 💪
-                        </p>
-                        <div className="flex gap-12 text-muted-foreground text-sm">
-                          <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                              />
-                            </svg>
-                            <span>89</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            <span>34</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                              />
-                            </svg>
-                            <span>432</span>
-                          </button>
-                          <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                  ) : userSuits.length > 0 ? (
+                    userSuits.map((suit) => (
+                      <SuitCard
+                        key={suit.id}
+                        {...suit}
+                        onLike={handleLike}
+                        onRepost={handleRepost}
+                        onReply={handleReply}
+                        onShare={handleShare}
+                        onBookmark={handleBookmark}
+                        bookmarked={false}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>No suits yet</p>
                     </div>
-                  </article>
+                  )}
                 </div>
               )}
               {activeTab !== "suits" && (
