@@ -28,7 +28,7 @@ interface SuitCardProps {
   currentBid?: number;
   isEncrypted?: boolean;
   media?: {
-    type: 'image' | 'video';
+    type: "image" | "video";
     url: string;
   };
   onLike: (id: string) => void;
@@ -198,7 +198,7 @@ export function SuitCard({
           {/* Media */}
           {media && (
             <div className="mt-3 rounded-2xl overflow-hidden border border-border">
-              {media.type === 'image' ? (
+              {media.type === "image" ? (
                 <img
                   src={media.url}
                   alt="Post media"
@@ -216,26 +216,35 @@ export function SuitCard({
 
           {/* Action Buttons with Icons and Counts */}
           <div className="mt-3 flex justify-between text-muted-foreground max-w-md">
-            <button 
-              onClick={() => onReply?.(id)}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onReply?.(id);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <MessageCircle size={16} />
               <span className="text-xs">{replies}</span>
             </button>
-            <button 
-              onClick={() => onRepost?.(id)}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRepost?.(id);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
-              <Repeat2 
-                size={16} 
+              <Repeat2
+                size={16}
                 color={reposted ? "#000" : "currentColor"}
                 className={reposted ? "text-green-600 dark:text-green-400" : ""}
               />
               <span className="text-xs">{reposts}</span>
             </button>
             <button
-              onClick={() => onLike(id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLike(id);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <Heart
@@ -246,7 +255,10 @@ export function SuitCard({
               <span className="text-xs">{likes}</span>
             </button>
             <button
-              onClick={() => onBookmark(id, !bookmarked)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBookmark(id, !bookmarked);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <Bookmark
@@ -256,8 +268,11 @@ export function SuitCard({
               />
               <span className="text-xs">{bookmarked ? "1" : "0"}</span>
             </button>
-            <button 
-              onClick={() => onShare?.(id)}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare?.(id);
+              }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
             >
               <Share size={16} />

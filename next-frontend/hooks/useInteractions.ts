@@ -7,7 +7,6 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import CONFIG from "../config";
 
-const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID;
 const INTERACTION_REGISTRY_ID = CONFIG.INTERACTION_REGISTRY;
 
 export function useInteractions() {
@@ -21,19 +20,38 @@ export function useInteractions() {
   const [error, setError] = useState<string | null>(null);
   const address = account?.address ?? null;
 
+  // Resolve the package ID from a Suit object's type to avoid config coupling
+  const getPackageIdFromSuit = useCallback(
+    async (suitId: string) => {
+      const obj = await suiClient.getObject({
+        id: suitId,
+        options: { showContent: true },
+      });
+      const typeStr = (obj as any)?.data?.content?.type as string | undefined;
+      if (!typeStr || typeof typeStr !== "string") {
+        throw new Error("Unable to resolve suit type for package id");
+      }
+      // Expect format: 0xPACKAGE::suits::Suit
+      const pkg = typeStr.split("::")[0];
+      if (!pkg?.startsWith("0x")) {
+        throw new Error("Invalid package id derived from suit type");
+      }
+      return pkg;
+    },
+    [suiClient]
+  );
+
   const likeSuit = useCallback(
     async (suitId: string) => {
       if (!address) throw new Error("Wallet not connected");
-      if (!PACKAGE_ID || PACKAGE_ID === "0x...") {
-        throw new Error("VITE_PACKAGE_ID not configured");
-      }
       setIsLiking(true);
       setError(null);
       try {
         const tx = new Transaction();
+        const pkg = await getPackageIdFromSuit(suitId);
 
         tx.moveCall({
-          target: `${PACKAGE_ID}::interactions::like_suit`,
+          target: `${pkg}::interactions::like_suit`,
           arguments: [
             tx.object(suitId), // &mut Suit
             tx.object(INTERACTION_REGISTRY_ID), // &mut InteractionRegistry
@@ -51,22 +69,20 @@ export function useInteractions() {
         setIsLiking(false);
       }
     },
-    [address, signAndExecute, suiClient]
+    [address, signAndExecute, suiClient, getPackageIdFromSuit]
   );
 
   const commentOnSuit = useCallback(
     async (suitId: string, content: string) => {
       if (!address) throw new Error("Wallet not connected");
-      if (!PACKAGE_ID || PACKAGE_ID === "0x...") {
-        throw new Error("VITE_PACKAGE_ID not configured");
-      }
       setIsCommenting(true);
       setError(null);
       try {
         const tx = new Transaction();
+        const pkg = await getPackageIdFromSuit(suitId);
 
         tx.moveCall({
-          target: `${PACKAGE_ID}::interactions::comment_on_suit`,
+          target: `${pkg}::interactions::comment_on_suit`,
           arguments: [
             tx.object(suitId), // &mut Suit
             tx.pure.string(content), // vector<u8> content
@@ -84,22 +100,20 @@ export function useInteractions() {
         setIsCommenting(false);
       }
     },
-    [address, signAndExecute, suiClient]
+    [address, signAndExecute, suiClient, getPackageIdFromSuit]
   );
 
   const retweetSuit = useCallback(
     async (suitId: string) => {
       if (!address) throw new Error("Wallet not connected");
-      if (!PACKAGE_ID || PACKAGE_ID === "0x...") {
-        throw new Error("VITE_PACKAGE_ID not configured");
-      }
       setIsRetweeting(true);
       setError(null);
       try {
         const tx = new Transaction();
+        const pkg = await getPackageIdFromSuit(suitId);
 
         tx.moveCall({
-          target: `${PACKAGE_ID}::interactions::retweet_suit`,
+          target: `${pkg}::interactions::retweet_suit`,
           arguments: [
             tx.object(suitId), // &mut Suit
             tx.object(INTERACTION_REGISTRY_ID), // &mut InteractionRegistry
@@ -117,18 +131,19 @@ export function useInteractions() {
         setIsRetweeting(false);
       }
     },
-    [address, signAndExecute, suiClient]
+    [address, signAndExecute, suiClient, getPackageIdFromSuit]
   );
 
   const checkUserLiked = useCallback(
     async (suitId: string, userAddress: string) => {
       try {
+        const pkg = await getPackageIdFromSuit(suitId);
         // Note: This is a simplified check. In production, you'd need to query
         // the likes table or check for owned Like objects
         const likeObjects = await suiClient.getOwnedObjects({
           owner: userAddress,
           filter: {
-            StructType: `${PACKAGE_ID}::interactions::Like`,
+            StructType: `${pkg}::interactions::Like`,
           },
         });
 
@@ -141,16 +156,17 @@ export function useInteractions() {
         return false;
       }
     },
-    [suiClient]
+    [suiClient, getPackageIdFromSuit]
   );
 
   const checkUserRetweeted = useCallback(
     async (suitId: string, userAddress: string) => {
       try {
+        const pkg = await getPackageIdFromSuit(suitId);
         const retweetObjects = await suiClient.getOwnedObjects({
           owner: userAddress,
           filter: {
-            StructType: `${PACKAGE_ID}::interactions::Retweet`,
+            StructType: `${pkg}::interactions::Retweet`,
           },
         });
 
@@ -163,7 +179,7 @@ export function useInteractions() {
         return false;
       }
     },
-    [suiClient]
+    [suiClient, getPackageIdFromSuit]
   );
 
   return useMemo(

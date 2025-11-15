@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSui } from "./sui-context";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuits } from "../hooks/useSuits";
 import { useInteractions } from "../hooks/useInteractions";
 import { useProfile } from "../hooks/useProfile";
@@ -183,7 +183,8 @@ const FOLLOWING_SUITS: Suit[] = [
 ];
 
 export function HomeFeed({ onCompose }: HomeFeedProps) {
-  const { address } = useSui();
+  const account = useCurrentAccount();
+  const address = account?.address ?? null;
   const { fetchSuits, isFetching } = useSuits();
   const {
     likeSuit,
@@ -251,7 +252,9 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
         };
       });
 
-      const transformed = (await Promise.all(transformedPromises)).filter(Boolean) as Suit[];
+      const transformed = (await Promise.all(transformedPromises)).filter(
+        Boolean
+      ) as Suit[];
 
       setOnChainSuits(transformed);
     };
