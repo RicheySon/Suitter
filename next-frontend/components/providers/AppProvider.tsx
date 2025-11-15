@@ -16,6 +16,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
         <WalletProvider
+          autoConnect={true}
           slushWallet={{
             name: "suitter",
           }}
