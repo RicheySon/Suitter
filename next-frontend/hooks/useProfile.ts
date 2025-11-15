@@ -75,6 +75,7 @@ export function useProfile() {
         if (!obj) return null;
 
         const content = obj?.data?.content;
+        const objectId = obj?.data?.objectId;
         let fields = {};
         if (content && typeof content === "object" && "fields" in content) {
           fields = (content as any).fields;
@@ -92,7 +93,7 @@ export function useProfile() {
         const pfpUrl = (fields as any).pfp_url
           ? readStr((fields as any).pfp_url)
           : "";
-        return { username, bio, pfpUrl };
+        return { profileId: objectId as string, username, bio, pfpUrl };
       } catch (e) {
         console.error("fetchProfileByAddress failed", e);
         return null;

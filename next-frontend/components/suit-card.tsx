@@ -10,12 +10,14 @@ import {
 import { formatTime } from "@/lib/utils";
 import { OwnershipHistoryModal } from "./ownership-history-modal";
 import { BidModal } from "./bid-modal";
+import { Link } from "react-router-dom";
 
 interface SuitCardProps {
   id: string;
   author: string;
   handle: string;
   avatar: string;
+  authorAddress?: string;
   content: string;
   timestamp: number;
   likes: number;
@@ -45,6 +47,7 @@ export function SuitCard({
   author,
   handle,
   avatar,
+  authorAddress,
   content,
   timestamp,
   likes,
@@ -123,10 +126,12 @@ export function SuitCard({
                 </div>
                 <div className="flex text-sm flex-wrap gap-10 items-start">
                   <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-foreground hover:underline">
+                    <Link to={`/profile?address=${authorAddress}`} className="font-semibold text-foreground hover:underline">
                       {author}
-                    </span>
-                    <span className="text-muted-foreground">@{handle}</span>
+                    </Link>
+                    <Link to={`/profile?address=${authorAddress}`} className="text-muted-foreground hover:underline">
+                      @{handle}
+                    </Link>
                   </div>
                   <div className="flex items-center">
                     <span className="text-muted-foreground hover:underline">

@@ -14,6 +14,7 @@ interface Suit {
   author: string;
   handle: string;
   avatar: string;
+  authorAddress?: string;
   content: string;
   timestamp: number;
   likes: number;
@@ -237,6 +238,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           author: displayName,
           handle: handleName,
           avatar: avatarUrl,
+          authorAddress: creatorAddress,
           content: fields.content || "",
           timestamp: parseInt(fields.created_at) || Date.now(),
           likes: parseInt(fields.like_count) || 0,

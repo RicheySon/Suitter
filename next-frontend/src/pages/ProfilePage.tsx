@@ -1,4 +1,4 @@
-import { MapPin, LinkIcon, Calendar, Mail, MoreHorizontal } from "lucide-react";
+import { MapPin, LinkIcon, Calendar, MoreHorizontal, MessageCircle } from "lucide-react";
 import { MinimalHeader } from "../../components/minimal-header";
 import { AppSidebar } from "../../components/app-sidebar";
 import { SuiProvider } from "../../components/sui-context";
@@ -8,24 +8,30 @@ import { useEffect, useState } from "react";
 import { useProfile } from "../../hooks/useProfile";
 import { useSuits } from "../../hooks/useSuits";
 import { useInteractions } from "../../hooks/useInteractions";
+import { useMessaging } from "../../hooks/useMessaging";
 import { CreateProfileModal } from "../../components/create-profile-modal";
 import { UpdateProfileModal } from "../../components/update-profile-modal";
 import { SuitCard } from "../../components/suit-card";
 import { CommentsView } from "../../components/comments-view";
 import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 function ProfileContent() {
   const account = useCurrentAccount();
   const address = account?.address ?? null;
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const targetAddress = searchParams.get('address') || address;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "suits" | "media" | "likes" | "replies"
   >("suits");
   const [isFollowing, setIsFollowing] = useState(false);
-  const { fetchMyProfileFields } = useProfile();
+  const { fetchMyProfileFields, fetchProfileByAddress } = useProfile();
   const { fetchSuits } = useSuits();
   const { likeSuit, retweetSuit } = useInteractions();
+  const { startChat } = useMessaging();
   const [onChainName, setOnChainName] = useState<string>("");
   const [onChainBio, setOnChainBio] = useState<string>("");
   const [onChainPfp, setOnChainPfp] = useState<string>("");
@@ -37,10 +43,14 @@ function ProfileContent() {
   const [isLoadingSuits, setIsLoadingSuits] = useState(true);
   const [commentsViewOpen, setCommentsViewOpen] = useState(false);
   const [commentsForSuit, setCommentsForSuit] = useState<any | null>(null);
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const fields = await fetchMyProfileFields();
+      if (!targetAddress) return;
+      const fields = targetAddress === address
+        ? await fetchMyProfileFields()
+        : await fetchProfileByAddress(targetAddress);
       if (fields) {
         setHasProfile(true);
         setProfileId(fields.profileId || "");
@@ -51,12 +61,12 @@ function ProfileContent() {
         setHasProfile(false);
       }
     })();
-  }, [fetchMyProfileFields, address]);
+  }, [fetchMyProfileFields, fetchProfileByAddress, targetAddress, address]);
 
   // Fetch user's suits
   useEffect(() => {
     const loadSuits = async () => {
-      if (!address) return;
+      if (!targetAddress) return;
 
       setIsLoadingSuits(true);
       try {
@@ -64,19 +74,20 @@ function ProfileContent() {
         const filtered = allSuits.filter((suit: any) => {
           const fields = suit?.content?.fields;
           const creator = fields?.creator;
-          return creator === address;
+          return creator === targetAddress;
         });
 
         const transformed = filtered.map((suit: any) => {
           const fields = suit?.content?.fields;
           return {
             id: suit.objectId,
-            author: onChainName || address.slice(0, 8),
-            handle: onChainName || address.slice(0, 8),
+            author: onChainName || targetAddress.slice(0, 8),
+            handle: onChainName || targetAddress.slice(0, 8),
             avatar:
               onChainPfp ||
               onChainName?.slice(0, 2).toUpperCase() ||
-              address.slice(-2).toUpperCase(),
+              targetAddress.slice(-2).toUpperCase(),
+            authorAddress: fields?.creator,
             content: fields?.content || "",
             timestamp: parseInt(fields?.created_at) || Date.now(),
             likes: parseInt(fields?.like_count) || 0,
@@ -103,10 +114,10 @@ function ProfileContent() {
       }
     };
 
-    if (address && (onChainName || hasProfile !== null)) {
+    if (targetAddress && (onChainName || hasProfile !== null)) {
       loadSuits();
     }
-  }, [address, fetchSuits, onChainName, onChainPfp, hasProfile]);
+  }, [targetAddress, fetchSuits, onChainName, onChainPfp, hasProfile, address]);
 
   const handleLike = async (id: string) => {
     if (!address) return;
@@ -191,9 +202,25 @@ function ProfileContent() {
     console.log("Bookmark suit:", id, bookmarked);
   };
 
+  const handleMessage = async () => {
+    if (!targetAddress || !address || targetAddress === address) return;
+
+    setIsStartingChat(true);
+    try {
+      const result = await startChat(targetAddress);
+      if (result?.chatId) {
+        navigate('/messages');
+      }
+    } catch (error) {
+      console.error("Failed to start chat:", error);
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
+
   const userProfile = {
-    name: onChainName || address?.slice(0, 8) || "Anonymous",
-    handle: onChainName || address?.slice(0, 8) || "anonymous",
+    name: onChainName || targetAddress?.slice(0, 8) || "Anonymous",
+    handle: onChainName || targetAddress?.slice(0, 8) || "anonymous",
     bio:
       onChainBio ||
       "Building decentralized social platforms on Sui | Web3 Enthusiast | Creating the future of social media 🚀",
@@ -203,7 +230,7 @@ function ProfileContent() {
     followers: 5678,
     following: 1234,
     suitsCount: 342,
-    walletAddress: address || "0x1234...5678",
+    walletAddress: targetAddress || "0x1234...5678",
   };
 
   return (
@@ -278,10 +305,13 @@ function ProfileContent() {
                           <MoreHorizontal size={20} />
                         </button>
                         <button
-                          className="px-4 py-2 border border-border rounded-full hover:bg-muted transition-colors font-semibold flex items-center gap-2"
+                          onClick={handleMessage}
+                          disabled={isStartingChat}
+                          className="px-4 py-2 border border-border rounded-full hover:bg-muted transition-colors font-semibold flex items-center gap-2 disabled:opacity-50"
                           aria-label="Message"
                         >
-                          <Mail size={18} />
+                          <MessageCircle size={18} />
+                          {isStartingChat ? "Starting..." : "Message"}
                         </button>
                         <button
                           onClick={() => setIsFollowing(!isFollowing)}
