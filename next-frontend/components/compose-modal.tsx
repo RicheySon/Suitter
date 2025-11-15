@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, Image, Smile, Loader2, Video, XCircle } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuits } from "../hooks/useSuits";
+import { useWalrusUpload } from "../hooks/useWalrusUpload";
 import { motion, AnimatePresence } from "framer-motion";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 
@@ -24,6 +25,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
   const currentAccount = useCurrentAccount();
   const address = currentAccount?.address;
   const { postSuit, isPosting: _isPostingOnChain } = useSuits();
+  const { uploadImage, isUploading } = useWalrusUpload();
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState("");
@@ -130,9 +132,24 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
     setIsPosting(true);
     setError("");
     try {
-      // TODO: If you support media in Move, upload first and pass URLs.
-      // For now we just post the text content via the suits Move call.
-      await postSuit(content);
+      let mediaUrls: string[] = [];
+
+      // Upload media files to Walrus if any
+      if (selectedFiles.length > 0) {
+        try {
+          const uploadPromises = selectedFiles.map((file) => uploadImage(file));
+          const results = await Promise.all(uploadPromises);
+          mediaUrls = results.map((r) => r.url);
+        } catch (uploadError: any) {
+          console.error("Failed to upload media:", uploadError);
+          setError("Failed to upload media. Please try again.");
+          setIsPosting(false);
+          return;
+        }
+      }
+
+      // Post suit with media URLs
+      await postSuit(content, mediaUrls);
 
       // Cleanup
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -301,7 +318,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-full transition-colors disabled:opacity-50"
                 aria-label="Add image"
-                disabled={isPosting || selectedFiles.length > 0}
+                disabled={isPosting || isUploading || selectedFiles.length > 0}
               >
                 <Image size={20} />
               </button>
@@ -309,7 +326,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
                 onClick={() => videoInputRef.current?.click()}
                 className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-full transition-colors disabled:opacity-50"
                 aria-label="Add video"
-                disabled={isPosting || selectedFiles.length > 0}
+                disabled={isPosting || isUploading || selectedFiles.length > 0}
               >
                 <Video size={20} />
               </button>
@@ -396,14 +413,18 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
               <button
                 onClick={handlePost}
                 disabled={
-                  !content.trim() || isOverLimit || isPosting || !address
+                  !content.trim() ||
+                  isOverLimit ||
+                  isPosting ||
+                  isUploading ||
+                  !address
                 }
                 className="px-6 py-2 bg-foreground text-background hover:bg-foreground/90 font-semibold rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center"
               >
-                {isPosting ? (
+                {isPosting || isUploading ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Posting
+                    {isUploading ? "Uploading" : "Posting"}
                   </>
                 ) : (
                   "Post"

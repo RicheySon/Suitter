@@ -2,9 +2,9 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
-  useSuiClient,
 } from "@mysten/dapp-kit";
 import { WalrusClient } from "@mysten/walrus";
+import { SuiClient } from "@mysten/sui/client";
 
 interface UploadResult {
   blobId: string;
@@ -14,13 +14,20 @@ interface UploadResult {
 export function useWalrusUpload() {
   const account = useCurrentAccount();
   const address = account?.address;
-  const suiClient = useSuiClient();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
   const clientRef = useRef<WalrusClient | null>(null);
+  const walrusSuiClientRef = useRef<SuiClient | null>(null);
+
   if (!clientRef.current) {
-    // Instantiate for testnet (adjust if environment differs)
-    clientRef.current = new WalrusClient({ network: "testnet", suiClient });
+    // Walrus requires its own SuiClient pointing to testnet
+    walrusSuiClientRef.current = new SuiClient({
+      url: "https://fullnode.testnet.sui.io:443",
+    });
+    clientRef.current = new WalrusClient({
+      network: "testnet",
+      suiClient: walrusSuiClientRef.current,
+    });
   }
 
   const [isUploading, setIsUploading] = useState(false);
@@ -46,13 +53,17 @@ export function useWalrusUpload() {
           transaction: registerTx,
         });
         // Wait for registration to finalize before upload
-        await suiClient.waitForTransaction({ digest: registerDigest });
+        await walrusSuiClientRef.current!.waitForTransaction({
+          digest: registerDigest,
+        });
         await flow.upload({ digest: registerDigest });
         const certifyTx = flow.certify();
         const { digest: certifyDigest } = await signAndExecute({
           transaction: certifyTx,
         });
-        await suiClient.waitForTransaction({ digest: certifyDigest });
+        await walrusSuiClientRef.current!.waitForTransaction({
+          digest: certifyDigest,
+        });
         const { blobId } = await flow.getBlob();
         // Construct a public URL (testnet storage domain convention)
         const url = `https://walrus-testnet.storage.mystenlabs.com/blob/${blobId}`;
@@ -64,7 +75,7 @@ export function useWalrusUpload() {
         setIsUploading(false);
       }
     },
-    [address, signAndExecute, suiClient]
+    [address, signAndExecute]
   );
 
   return useMemo(

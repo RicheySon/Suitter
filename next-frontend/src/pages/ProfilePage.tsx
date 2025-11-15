@@ -4,13 +4,15 @@ import { AppSidebar } from "../../components/app-sidebar";
 import { SuiProvider } from "../../components/sui-context";
 import { ComposeModal } from "../../components/compose-modal";
 import { TrendingSidebar } from "../../components/trending-sidebar";
-import { useSui } from "../../components/sui-context";
 import { useEffect, useState } from "react";
 import { useProfile } from "../../hooks/useProfile";
 import { useSuits } from "../../hooks/useSuits";
 import { useInteractions } from "../../hooks/useInteractions";
 import { CreateProfileModal } from "../../components/create-profile-modal";
+import { UpdateProfileModal } from "../../components/update-profile-modal";
 import { SuitCard } from "../../components/suit-card";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import CONFIG from "../../config";
 
 function ProfileContent() {
   const { address } = useSui();
