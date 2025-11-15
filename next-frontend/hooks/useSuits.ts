@@ -5,16 +5,12 @@ import {
   useSuiClient,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { bcs } from "@mysten/sui/bcs";
 import CONFIG from "../config";
 
 const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID;
+const SUIT_REGISTRY_ID = CONFIG.SUIT_REGISTRY;
 
-/**
- * NOTE: This assumes a Move entry function exists:
- * entry fun create_suit(content: vector<u8>, ctx: &mut TxContext) { ... }
- * in module `${PACKAGE_ID}::suits::suits`.
- * If the function name or signature differs, update target/arguments accordingly.
- */
 export function useSuits() {
   const suiClient = useSuiClient();
   const account = useCurrentAccount();
@@ -35,20 +31,24 @@ export function useSuits() {
       try {
         const tx = new Transaction();
 
-        // Convert media URLs to vector<vector<u8>> format
-        const mediaUrlsBytes = (mediaUrls || []).map((url) =>
-          Array.from(new TextEncoder().encode(url))
-        );
-
-        // create_suit(registry, content, media_urls, clock)
         tx.moveCall({
           target: `${PACKAGE_ID}::suits::create_suit`,
           arguments: [
-            tx.pure.string(content), // content as vector<u8>
-            tx.pure(mediaUrlsBytes, "vector<vector<u8>>"), // media_urls
+            tx.object(SUIT_REGISTRY_ID), // &mut SuitRegistry
+            tx.pure.string(content), // vector<u8> content
+            tx.pure(
+              bcs
+                .vector(bcs.vector(bcs.u8()))
+                .serialize(
+                  (mediaUrls || []).map((url) =>
+                    Array.from(new TextEncoder().encode(url))
+                  )
+                )
+            ), // vector<vector<u8>> media URLs
             tx.object("0x6"), // Clock object
           ],
         });
+
         const { digest } = await signAndExecute({ transaction: tx });
         await suiClient.waitForTransaction({ digest });
         return digest;

@@ -3,6 +3,16 @@ const CONFIG = {
   VITE_API_URL: import.meta.env.VITE_API_URL || "https://api.example.com",
   VITE_WALRUS_URL:
     import.meta.env.VITE_WALRUS_URL || "https://walrus.example.com",
+  SUIT_REGISTRY:
+    "0x13ae63b88414ef8e40cc26f042911e83c90456c05dffeb8fbabc85c0d32d4134",
+  INTERACTION_REGISTRY:
+    "0x41f4cc6d57beb4f5416efd4e15c0660cc046c5a366d3704062431e76298e8454",
+  USERNAME_REGISTRY:
+    "0x485c056cf156b3fe659d0484836f07c03cf5e11cb6af4fbf8789c7db5bfa69a2",
+  TIP_BALANCE_REGISTRY:
+    "0x6da7688585cf67219377b4b02417dd3e8305e5b66a53b5c0bd4864cdd415d777",
+  CHAT_REGISTRY:
+    "0xca112375576872a72cc7b08986cef004892655384638bc0fddb70f5c1b333a83",
 };
 
 export default CONFIG;
