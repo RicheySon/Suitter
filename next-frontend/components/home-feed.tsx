@@ -6,6 +6,7 @@ import { useProfile } from "../hooks/useProfile";
 import { SuitCard } from "./suit-card";
 import { FeedVertical } from "./feed-vertical";
 import { ReplyModal } from "./reply-modal";
+import { CommentsView } from "./comments-view";
 import { truncateAddress } from "@/lib/utils";
 
 interface Suit {
@@ -199,6 +200,8 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [replyToSuit, setReplyToSuit] = useState<Suit | null>(null);
+  const [commentsViewOpen, setCommentsViewOpen] = useState(false);
+  const [commentsForSuit, setCommentsForSuit] = useState<Suit | null>(null);
 
   // Fetch on-chain suits on mount
   useEffect(() => {
@@ -215,11 +218,17 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
         let handleName = truncateAddress(creatorAddress || "unknown", 4, 4);
 
         // Fetch profile for the creator
+        let avatarUrl = creatorAddress?.slice(-2).toUpperCase() || "??";
         if (creatorAddress) {
           const profile = await fetchProfileByAddress(creatorAddress);
-          if (profile && profile.username) {
-            displayName = profile.username;
-            handleName = profile.username;
+          if (profile) {
+            if (profile.username) {
+              displayName = profile.username;
+              handleName = profile.username;
+            }
+            if (profile.pfpUrl) {
+              avatarUrl = profile.pfpUrl;
+            }
           }
         }
 
@@ -227,7 +236,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           id: suit.objectId,
           author: displayName,
           handle: handleName,
-          avatar: creatorAddress?.slice(-2).toUpperCase() || "??",
+          avatar: avatarUrl,
           content: fields.content || "",
           timestamp: parseInt(fields.created_at) || Date.now(),
           likes: parseInt(fields.like_count) || 0,
@@ -386,6 +395,14 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     }
   };
 
+  const handleViewComments = (id: string) => {
+    const suit = currentSuits.find((s) => s.id === id);
+    if (suit) {
+      setCommentsForSuit(suit);
+      setCommentsViewOpen(true);
+    }
+  };
+
   const handleReplySubmit = async (suitId: string, replyContent: string) => {
     if (!address) {
       console.log("Please connect wallet to comment");
@@ -515,6 +532,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
                 onLike={toggleLike}
                 onRepost={toggleRepost}
                 onReply={handleReply}
+                onViewComments={handleViewComments}
                 onShare={handleShare}
                 onBookmark={toggleBookmark}
                 bookmarked={bookmarks.has(suit.id)}
@@ -539,6 +557,21 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
             content: replyToSuit.content,
           }}
           onReplySubmit={handleReplySubmit}
+        />
+      )}
+
+      {commentsForSuit && (
+        <CommentsView
+          isOpen={commentsViewOpen}
+          onClose={() => {
+            setCommentsViewOpen(false);
+            setCommentsForSuit(null);
+          }}
+          suitId={commentsForSuit.id}
+          suitContent={commentsForSuit.content}
+          suitAuthor={commentsForSuit.author}
+          suitHandle={commentsForSuit.handle}
+          suitAvatar={commentsForSuit.avatar}
         />
       )}
     </div>

@@ -34,6 +34,7 @@ interface SuitCardProps {
   onLike: (id: string) => void;
   onRepost?: (id: string) => void;
   onReply?: (id: string) => void;
+  onViewComments?: (id: string) => void;
   onShare?: (id: string) => void;
   onBookmark: (id: string, isBookmarked: boolean) => void;
   bookmarked?: boolean;
@@ -59,6 +60,7 @@ export function SuitCard({
   onLike,
   onRepost,
   onReply,
+  onViewComments,
   onShare,
   onBookmark,
   bookmarked = false,
@@ -108,8 +110,16 @@ export function SuitCard({
             <div className="flex items-center justify-between">
               {/* Avatar */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0">
-                  {avatar}
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
+                  {avatar && avatar.startsWith("http") ? (
+                    <img
+                      src={avatar}
+                      alt={author}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{avatar}</span>
+                  )}
                 </div>
                 <div className="flex text-sm flex-wrap gap-10 items-start">
                   <div className="flex flex-col gap-1">
@@ -219,9 +229,14 @@ export function SuitCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onReply?.(id);
+                if (onViewComments) {
+                  onViewComments(id);
+                } else {
+                  onReply?.(id);
+                }
               }}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-muted transition-colors group/btn"
+              title="View comments"
             >
               <MessageCircle size={16} />
               <span className="text-xs">{replies}</span>

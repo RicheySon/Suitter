@@ -182,6 +182,46 @@ export function useInteractions() {
     [suiClient, getPackageIdFromSuit]
   );
 
+  const fetchComments = useCallback(
+    async (suitId: string) => {
+      try {
+        const pkg = await getPackageIdFromSuit(suitId);
+        
+        // Query for Comment events
+        const events = await suiClient.queryEvents({
+          query: {
+            MoveEventType: `${pkg}::interactions::CommentCreated`,
+          },
+          limit: 100,
+        });
+
+        // Filter comments for this specific suit
+        const comments = events.data
+          .filter((event: any) => {
+            const parsedJson = event.parsedJson;
+            return parsedJson?.suit_id === suitId;
+          })
+          .map((event: any) => {
+            const parsedJson = event.parsedJson;
+            return {
+              id: event.id.txDigest,
+              suitId: parsedJson.suit_id,
+              commenter: parsedJson.commenter,
+              content: parsedJson.content,
+              timestamp: parseInt(parsedJson.timestamp) || Date.now(),
+            };
+          })
+          .sort((a, b) => b.timestamp - a.timestamp); // Most recent first
+
+        return comments;
+      } catch (e) {
+        console.error("Failed to fetch comments:", e);
+        return [];
+      }
+    },
+    [suiClient, getPackageIdFromSuit]
+  );
+
   return useMemo(
     () => ({
       address,
@@ -194,6 +234,7 @@ export function useInteractions() {
       retweetSuit,
       checkUserLiked,
       checkUserRetweeted,
+      fetchComments,
     }),
     [
       address,
@@ -206,6 +247,7 @@ export function useInteractions() {
       retweetSuit,
       checkUserLiked,
       checkUserRetweeted,
+      fetchComments,
     ]
   );
 }

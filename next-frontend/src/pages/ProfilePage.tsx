@@ -9,8 +9,9 @@ import { useProfile } from "../../hooks/useProfile";
 import { useSuits } from "../../hooks/useSuits";
 import { useInteractions } from "../../hooks/useInteractions";
 import { CreateProfileModal } from "../../components/create-profile-modal";
-// import { UpdateProfileModal } from "../../components/update-profile-modal";
+import { UpdateProfileModal } from "../../components/update-profile-modal";
 import { SuitCard } from "../../components/suit-card";
+import { CommentsView } from "../../components/comments-view";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 
 function ProfileContent() {
@@ -29,15 +30,20 @@ function ProfileContent() {
   const [onChainBio, setOnChainBio] = useState<string>("");
   const [onChainPfp, setOnChainPfp] = useState<string>("");
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [profileId, setProfileId] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [userSuits, setUserSuits] = useState<any[]>([]);
   const [isLoadingSuits, setIsLoadingSuits] = useState(true);
+  const [commentsViewOpen, setCommentsViewOpen] = useState(false);
+  const [commentsForSuit, setCommentsForSuit] = useState<any | null>(null);
 
   useEffect(() => {
     (async () => {
       const fields = await fetchMyProfileFields();
       if (fields) {
         setHasProfile(true);
+        setProfileId(fields.profileId || "");
         setOnChainName(fields.username || "");
         setOnChainBio(fields.bio || "");
         setOnChainPfp(fields.pfpUrl || "");
@@ -169,6 +175,14 @@ function ProfileContent() {
     console.log("Reply to suit:", id);
   };
 
+  const handleViewComments = (id: string) => {
+    const suit = userSuits.find((s) => s.id === id);
+    if (suit) {
+      setCommentsForSuit(suit);
+      setCommentsViewOpen(true);
+    }
+  };
+
   const handleShare = (id: string) => {
     console.log("Share suit:", id);
   };
@@ -281,7 +295,9 @@ function ProfileContent() {
                         </button>
                       </>
                     ) : hasProfile ? (
-                      <button className="px-4 py-2 border border-border rounded-full hover:bg-muted transition-colors font-semibold">
+                      <button 
+                        onClick={() => setIsUpdateModalOpen(true)}
+                        className="px-4 py-2 border border-border rounded-full hover:bg-muted transition-colors font-semibold">
                         Edit profile
                       </button>
                     ) : (
@@ -392,6 +408,7 @@ function ProfileContent() {
                         onLike={handleLike}
                         onRepost={handleRepost}
                         onReply={handleReply}
+                        onViewComments={handleViewComments}
                         onShare={handleShare}
                         onBookmark={handleBookmark}
                         bookmarked={false}
@@ -458,6 +475,43 @@ function ProfileContent() {
           })();
         }}
       />
+
+      <UpdateProfileModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        currentProfile={{
+          profileId: profileId,
+          username: onChainName,
+          bio: onChainBio,
+          pfpUrl: onChainPfp,
+        }}
+        onUpdated={() => {
+          (async () => {
+            const fields = await fetchMyProfileFields();
+            if (fields) {
+              setProfileId(fields.profileId || "");
+              setOnChainName(fields.username || "");
+              setOnChainBio(fields.bio || "");
+              setOnChainPfp(fields.pfpUrl || "");
+            }
+          })();
+        }}
+      />
+
+      {commentsForSuit && (
+        <CommentsView
+          isOpen={commentsViewOpen}
+          onClose={() => {
+            setCommentsViewOpen(false);
+            setCommentsForSuit(null);
+          }}
+          suitId={commentsForSuit.id}
+          suitContent={commentsForSuit.content}
+          suitAuthor={commentsForSuit.author}
+          suitHandle={commentsForSuit.handle}
+          suitAvatar={commentsForSuit.avatar}
+        />
+      )}
     </div>
   );
 }
